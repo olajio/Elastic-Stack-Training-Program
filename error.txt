@@ -53,3 +53,7 @@
     }
   }
 }
+
+
+
+GET _tasks?actions=*reindex&detailed=true&parent_task_id=vhADf4m4RXqDvxCc1qHlPQ:14424923
