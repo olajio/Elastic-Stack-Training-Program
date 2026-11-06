@@ -1,0 +1,10 @@
+POST _reindex?wait_for_completion=false&slices=auto
+{
+  "source": { "index": "tmp_cdm_vuln", "size": 5000 },
+  "dest": { "index": "cdm_vuln", "op_type": "create" },
+  "conflicts": "proceed",
+  "script": {
+    "lang": "painless",
+    "source": "if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }"
+  }
+}
