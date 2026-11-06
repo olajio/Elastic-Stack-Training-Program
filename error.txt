@@ -443,3 +443,31 @@ POST _reindex?wait_for_completion=false
     }
   }
 }
+
+
+#####
+# 106: GET cdm_vuln/_mapping/field/custom.kev 200 OK
+{
+  "cdm_vuln": {
+    "mappings": {}
+  }
+}
+# 107: GET cdm_vuln/_search 200 OK
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 2,
+    "successful": 2,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 0,
+      "relation": "eq"
+    },
+    "max_score": null,
+    "hits": []
+  }
+}
