@@ -72,3 +72,374 @@ POST _reindex?wait_for_completion=false
     ]
   }
 }
+
+
+
+{
+  "_index": "tmp_cdm_vuln",
+  "_id": "0010062-0003211717-CVE-2025-21391",
+  "_version": 1,
+  "_seq_no": 90615,
+  "_primary_term": 1,
+  "found": true,
+  "_source": {
+    "custom": {
+      "kev": {
+        "date_added": "2025-02-11T12:00:00Z",
+        "product": "Windows",
+        "cve": {
+          "id": "CVE-2025-21391"
+        },
+        "notes": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-21391 ; https://nvd.nist.gov/vuln/detail/CVE-2025-21391",
+        "required_action": "Apply mitigations per vendor instructions or discontinue use of the product if mitigations are unavailable.",
+        "vendor": "Microsoft",
+        "due_date": "2025-03-04T12:00:00Z",
+        "name": "Microsoft Windows Storage Link Following Vulnerability",
+        "description": "Microsoft Windows Storage contains a link following vulnerability that could allow for privilege escalation. This vulnerability could allow an attacker to delete data including data that results in the service being unavailable.",
+        "known_ransomware_use": false
+      }
+    },
+    "device_scan": {
+      "type": "-"
+    },
+    "quality": {
+      "required_error_count": 30,
+      "deprecated_error_findings": [],
+      "count": 31,
+      "datatype_error_findings": [],
+      "enumerated_error_findings": [
+        {
+          "field": "vulnerability_finding.cve.severity",
+          "message": "Invalid value. Please reference the published data target documentation list of accepted values for this field.",
+          "value": "-"
+        }
+      ],
+      "enumerated_error_count": 1,
+      "datatype_error_count": 0,
+      "required_error_findings": [
+        {
+          "field": "host.exposed_to_internet"
+        },
+        {
+          "field": "host.is_ephemeral"
+        },
+        {
+          "field": "host.in_production"
+        },
+        {
+          "field": "host.system_boundary_assignment_date"
+        },
+        {
+          "field": "vulnerability_finding.risk_accepted"
+        },
+        {
+          "field": "system_boundary.authorized"
+        },
+        {
+          "field": "system_boundary.hva_status"
+        },
+        {
+          "field": "system_boundary.authorization_decision_date"
+        },
+        {
+          "field": "vulnerability_finding.detection_signature_id"
+        },
+        {
+          "field": "device_scan"
+        },
+        {
+          "field": "device_scan.scan_date"
+        },
+        {
+          "field": "device_scan.credentialed"
+        },
+        {
+          "field": "device_scan.observer.nvd_last_update_date"
+        },
+        {
+          "field": "host.interface[2].name"
+        },
+        {
+          "field": "host.services"
+        },
+        {
+          "field": "host.services.active_directory"
+        },
+        {
+          "field": "host.services.exchange"
+        },
+        {
+          "field": "host.services.domain_name"
+        },
+        {
+          "field": "vulnerability_finding.affected_software"
+        },
+        {
+          "field": "vulnerability_finding.affected_software.installation_file_path"
+        },
+        {
+          "field": "vulnerability_finding.affected_software.product"
+        },
+        {
+          "field": "vulnerability_finding.affected_software.vendor"
+        },
+        {
+          "field": "vulnerability_finding.affected_software.version"
+        },
+        {
+          "field": "device_scan.type"
+        },
+        {
+          "field": "system_boundary.fips_199_rating.availability"
+        },
+        {
+          "field": "system_boundary.fips_199_rating.confidentiality"
+        },
+        {
+          "field": "system_boundary.fips_199_rating.integrity"
+        },
+        {
+          "field": "system_boundary.fips_impact_level"
+        },
+        {
+          "field": "system_boundary.authorization_decision_type"
+        },
+        {
+          "field": "system_boundary.type"
+        }
+      ],
+      "deprecated_error_count": 0
+    },
+    "@timestamp": "2026-11-06T14:40:48.816860395Z",
+    "cdm_doc_id": "0010062-0003211717-CVE-2025-21391",
+    "system_boundary": {
+      "path": "AP0020189",
+      "fips_199_rating": {
+        "integrity": "-",
+        "confidentiality": "-",
+        "availability": "-"
+      },
+      "level2_id": "-",
+      "level": 0,
+      "fips_impact_level": "-",
+      "level0_id": "AP0020189",
+      "level1_id": "-",
+      "authorization_decision_type": "-",
+      "id": "AP0020189",
+      "type": "-"
+    },
+    "meta": {
+      "owner": "va",
+      "tier0_validated": true,
+      "pipeline_breadcrumbs": {
+        "components": [
+          {
+            "component": "Armis Connector",
+            "microservice": "va-armis-connector",
+            "process_date": "2026-11-05T17:25:51Z",
+            "loaded_from": "ArmisConnector.py"
+          },
+          {
+            "component": "Armis Router",
+            "microservice": "va-armis-processor",
+            "process_date": "2026-11-05T23:02:12Z",
+            "sending_to": "va-norm-vuln",
+            "loaded_from": "va-raw-armis"
+          },
+          {
+            "component": "CDM Router",
+            "microservice": "va-cdm-processor",
+            "process_date": "2026-11-06T14:40:41Z",
+            "sending_to": "va-cdm-vuln",
+            "loaded_from": "va-norm-vuln"
+          },
+          {
+            "component": "Elasticsearch Sink",
+            "microservice": "va-elastic-sink",
+            "process_date": "2026-11-06T14:40:48Z",
+            "loaded_from": "va-cdm-vuln"
+          }
+        ]
+      }
+    },
+    "lookedup": {
+      "cve": {
+        "id": "CVE-2025-21391",
+        "cvss_base_score_version": "3.1",
+        "cvss_base_score": 7.1
+      },
+      "kev": {
+        "due_date": "2025-03-04T12:00:00Z",
+        "date_added": "2025-02-11T12:00:00Z",
+        "in_catalog": true,
+        "required_action": "Apply mitigations per vendor instructions or discontinue use of the product if mitigations are unavailable."
+      },
+      "directive": {
+        "id": [
+          "BOD-22-01"
+        ]
+      }
+    },
+    "organization": {
+      "path": "VA",
+      "tier0_id": "VA",
+      "parent": "-",
+      "tier": 0,
+      "tier2_id": "-",
+      "tier1_id": "-",
+      "is_cfo_act": false,
+      "tier3_id": "-",
+      "name": "Department of Veterans Affairs",
+      "id": "VA",
+      "type": "GOVERNMENT",
+      "group": "Group B"
+    },
+    "host": {
+      "is_virtual": false,
+      "hardware_name": "Lenovo ThinkPad",
+      "os": {
+        "name": "Windows",
+        "family": "Windows",
+        "type": "windows",
+        "version": "11",
+        "platform": "Windows NT",
+        "full": "Windows 11"
+      },
+      "last_seen_date": "2026-11-05T08:26:33Z",
+      "services": {},
+      "interface": [
+        {
+          "ipv4": [
+            "10.122.155.229"
+          ],
+          "ip": [
+            "10.122.155.229"
+          ],
+          "name": "mtkwlex",
+          "mac": "c8:a3:e8:52:c3:7b"
+        },
+        {
+          "ipv4": [
+            "10.122.155.8"
+          ],
+          "ipv6": [
+            "fe80::fda7:3705:9131:d95c"
+          ],
+          "ip": [
+            "10.122.155.8",
+            "fe80::fda7:3705:9131:d95c"
+          ],
+          "name": "dlcdcncm",
+          "mac": "80:6d:97:01:50:71"
+        },
+        {
+          "ip": [],
+          "name": "-",
+          "mac": "ca:a3:e8:52:e3:5b"
+        },
+        {
+          "ipv4": [
+            "10.122.155.229"
+          ],
+          "ip": [
+            "10.122.155.229"
+          ],
+          "name": "dlcdcncm",
+          "mac": "00:50:b6:fd:70:d8"
+        }
+      ],
+      "type": "WORKSTATION",
+      "hostname": "mrn-lt244133.va.gov",
+      "exposed_to_internet": "-",
+      "encrypted": true,
+      "first_found_date": "2025-09-05T13:13:12Z",
+      "managed": true,
+      "authorized": true,
+      "name": "mrn-lt244133.va.gov",
+      "model": "ThinkPad",
+      "id": "0010062-0003211717",
+      "category": "ENDPOINT",
+      "make": "Lenovo",
+      "in_production": true,
+      "status": "ACTIVE"
+    },
+    "vulnerability_finding": {
+      "remediated": false,
+      "cve": {
+        "severity": "UNKNOWN",
+        "attack_complexity": "LOW",
+        "nvd_last_update_date": "2026-09-24T13:10:00Z",
+        "references": {
+          "url": [
+            "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-21391",
+            "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2025-21391"
+          ],
+          "tags": [
+            "Patch",
+            "Vendor Advisory",
+            "US Government Resource"
+          ]
+        },
+        "confidentiality": "NONE",
+        "description": "Windows Storage Elevation of Privilege Vulnerability",
+        "impact_score": 5.2,
+        "availability": "HIGH",
+        "cvss_base_score_version": "3.1",
+        "type": "NVD-CWE-noinfo",
+        "attack_vector": "LOCAL",
+        "nvd_days_active": 632,
+        "privileges_required": "LOW",
+        "integrity": "HIGH",
+        "enrichment_status": true,
+        "cvss_base_score": 7.1,
+        "user_interaction": "NONE",
+        "scope": "UNCHANGED",
+        "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+        "id": "CVE-2025-21391",
+        "publish_date": "2025-02-11T18:15:37Z",
+        "exploitability_score": 1.8
+      },
+      "last_found_date": "2025-09-05T13:13:12Z",
+      "first_found_date": "2025-09-05T13:13:12Z",
+      "affected_software": {
+        "product": "-",
+        "vendor": "-",
+        "installation_file_path": "-",
+        "version": "-"
+      },
+      "days_active": 426,
+      "detection_signature_id": "-",
+      "past_due": false,
+      "enumeration": "CVE",
+      "kev": {
+        "date_added": "2025-02-11T12:00:00Z",
+        "required_action": "Apply mitigations per vendor instructions or discontinue use of the product if mitigations are unavailable.",
+        "due_date": "2025-03-04T12:00:00Z",
+        "in_catalog": true
+      },
+      "directive": {
+        "id": [
+          "BOD-22-01"
+        ]
+      }
+    },
+    "lookedup_cve": {
+      "cve": {
+        "id": "CVE-2025-21391",
+        "cvss_base_score_version": "3.1",
+        "cvss_base_score": 7.1
+      },
+      "kev": {
+        "due_date": "2025-03-04T12:00:00Z",
+        "date_added": "2025-02-11T12:00:00Z",
+        "in_catalog": true,
+        "required_action": "Apply mitigations per vendor instructions or discontinue use of the product if mitigations are unavailable."
+      },
+      "directive": {
+        "id": [
+          "BOD-22-01"
+        ]
+      }
+    }
+  }
+}
