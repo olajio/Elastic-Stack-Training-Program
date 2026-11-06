@@ -1,3 +1,16 @@
+POST _reindex?wait_for_completion=false
+{
+  "source": {
+    "index": "tmp_cdm_swam",
+    "size": 5000
+  },
+  "dest": {
+    "index": "cdm_swam",
+    "op_type": "create"
+  },
+  "conflicts": "proceed"
+}
+
 "completed": true,
   "task": {
     "node": "8yhqi-jqQu2UWko9DgoEkQ",
