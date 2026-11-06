@@ -1,0 +1,2355 @@
+# 120: GET _ingest/pipeline/custom_fields_pipeline 200 OK
+{
+  "custom_fields_pipeline": {
+    "description": "Note : requires custom_sysb_enrich_policy_v62, custom_host_enrich_policy_v62",
+    "processors": [
+      {
+        "set": {
+          "field": "custom.flag1",
+          "value": "custom_fields_pipeline_beg",
+          "if": "ctx._index ==~ /^xxxx_cdm_(hwam|csm|swam|vuln).*/"
+        }
+      },
+      {
+        "enrich": {
+          "policy_name": "custom_sysb_enrich_policy_v62",
+          "tag": "sbEnrichment",
+          "field": "system_boundary.id",
+          "target_field": "_sb_cust_looked",
+          "if": "ctx._index ==~ /^cdm_(hwam|csm|swam|vuln)/ && ctx.containsKey('system_boundary') "
+        }
+      },
+      {
+        "remove": {
+          "ignore_missing": true,
+          "field": "custom.system_boundary",
+          "if": "ctx._index ==~ /^cdm_(hwam|csm|swam|vuln)/"
+        }
+      },
+      {
+        "rename": {
+          "ignore_missing": true,
+          "field": "_sb_cust_looked.custom.system_boundary",
+          "target_field": "custom.system_boundary"
+        }
+      },
+      {
+        "set": {
+          "ignore_empty_value": true,
+          "field": "custom.system_boundary.owner",
+          "override": false,
+          "tag": "bugFix : cdm_hwam_pipeline",
+          "copy_from": "_sb_cust_looked.system_boundary.owner",
+          "if": "ctx._index ==~ /^cdm_(hwam|csm|swam|vuln)/"
+        }
+      },
+      {
+        "convert": {
+          "ignore_failure": true,
+          "ignore_missing": true,
+          "field": "custom.system_boundary.isfismareportable",
+          "type": "boolean"
+        }
+      },
+      {
+        "convert": {
+          "ignore_failure": true,
+          "ignore_missing": true,
+          "field": "custom.system_boundary.hva_status",
+          "type": "boolean"
+        }
+      },
+      {
+        "split": {
+          "ignore_failure": true,
+          "field": "custom.sourcetype_hwam",
+          "ignore_missing": true,
+          "tag": "hostSourceType",
+          "separator": ";",
+          "if": "ctx._index == \"cdm_hwam\""
+        }
+      },
+      {
+        "split": {
+          "ignore_failure": true,
+          "ignore_missing": true,
+          "tag": "csmSourceType",
+          "field": "custom.sourcetype_csm",
+          "separator": ";"
+        }
+      },
+      {
+        "split": {
+          "ignore_failure": true,
+          "ignore_missing": true,
+          "tag": "swamSourceType",
+          "field": "custom.sourcetype_swam",
+          "separator": ";"
+        }
+      },
+      {
+        "split": {
+          "ignore_failure": true,
+          "ignore_missing": true,
+          "tag": "vulnSourceType",
+          "field": "custom.sourcetype_vuln",
+          "separator": ";"
+        }
+      },
+      {
+        "enrich": {
+          "policy_name": "custom_host_enrich_policy_v62",
+          "tag": "hostEnrichment_csmSwamVuln",
+          "field": "host.id",
+          "target_field": "_host_cust_looked",
+          "if": "ctx._index ==~ /^cdm_(csm|swam|vuln)/ "
+        }
+      },
+      {
+        "rename": {
+          "ignore_missing": true,
+          "field": "_host_cust_looked.custom.host",
+          "target_field": "custom.host",
+          "if": "ctx._index ==~ /^cdm_(csm|swam|vuln)/ "
+        }
+      },
+      {
+        "enrich": {
+          "field": "vulnerability_finding.cve.id",
+          "target_field": "_kev_looked",
+          "policy_name": "custom_kev_enrich_policy",
+          "ignore_missing": true,
+          "tag": "kevEnrichment",
+          "if": "ctx._index == 'cdm_vuln' && ctx.containsKey('vulnerability_finding') && ctx.vulnerability_finding.containsKey ('kev') && ctx.vulnerability_finding.kev.containsKey('in_catalog') && ctx.vulnerability_finding.kev.in_catalog == true"
+        }
+      },
+      {
+        "rename": {
+          "ignore_missing": true,
+          "field": "_kev_looked.kev",
+          "target_field": "custom.kev",
+          "if": "ctx._index == 'cdm_vuln'"
+        }
+      },
+      {
+        "script": {
+          "ignore_failure": true,
+          "source": """//Extract individual 'poams' from 'custom.prev.poams' field
+              ctx['custom']['poamFlag'] = 'beg' ;
+              ctx['custom']['poam']['previous'] = new ArrayList();
+              def A_prevPoamSplit=ctx['custom']['poam']['prev']['poams'].splitOnToken('|');
+              for ( item in A_prevPoamSplit ) {
+                def A_thisPoam=item.splitOnToken(';') ;
+                  if (A_thisPoam.length >= 3) {
+                    ctx['custom']['poam']['previous'].add(["id": A_thisPoam[0], "created_date": A_thisPoam[1], "completion_date": A_thisPoam[2]]) ;
+                  } 
+              } ctx['custom']['poam'].remove('prev')""",
+          "lang": "painless",
+          "if": """ctx._index == 'cdm_vuln' 
+              && ctx.containsKey('custom') && ctx.custom.containsKey ('poam') && ctx.custom.poam.containsKey('prev')"""
+        }
+      },
+      {
+        "remove": {
+          "ignore_missing": true,
+          "tag": "sbLookCleanup",
+          "field": [
+            "_sb_cust_looked",
+            "_host_cust_looked",
+            "_kev_looked"
+          ]
+        }
+      }
+    ],
+    "version": 62
+  }
+}
+# 121: GET _ingest/pipeline/cdm_vuln_final 200 OK
+{
+  "cdm_vuln_final": {
+    "description": "Final pipeline that will sort the last known good VULN documents.",
+    "processors": [
+      {
+        "set": {
+          "field": "@timestamp",
+          "value": "{{_ingest.timestamp}}"
+        }
+      },
+      {
+        "set": {
+          "field": "tmp",
+          "value": "dashboard"
+        }
+      },
+      {
+        "enrich": {
+          "policy_name": "cdm_config_t0",
+          "field": "tmp",
+          "target_field": "config"
+        }
+      },
+      {
+        "set": {
+          "field": "meta.owner",
+          "value": "{{config.organization.id}}"
+        }
+      },
+      {
+        "script": {
+          "source": """        if(ctx.organization!=null && (!ctx.organization.isEmpty())) {
+            if(ctx.organization.path != null && !(ctx.organization.path.isEmpty())) {
+              ctx.meta.tier0_validated = (ctx.meta.owner.toLowerCase()==ctx.organization.path.splitOnToken('/')[0].toLowerCase());
+            }
+          }"""
+        }
+      },
+      {
+        "remove": {
+          "field": [
+            "tmp",
+            "config"
+          ]
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.id != null) {
+                ctx.vulnerability_finding.cve.id = ctx.vulnerability_finding.cve.id.trim().toUpperCase();
+              }
+            } catch (Exception e) {
+              ctx.vulnerability_finding.cve.dictionary_error = ["field": "id", "error": e.toString()];
+            }
+          """
+        }
+      },
+      {
+        "enrich": {
+          "ignore_failure": false,
+          "on_failure": [
+            {
+              "set": {
+                "field": "ingest_error.message",
+                "copy_from": "_ingest.on_failure_message"
+              }
+            },
+            {
+              "set": {
+                "field": "ingest_error.processor",
+                "copy_from": "_ingest.on_failure_processor_type"
+              }
+            }
+          ],
+          "field": "vulnerability_finding.cve.id",
+          "target_field": "lookedup_cve",
+          "policy_name": "cdm_vuln_cve",
+          "ignore_missing": false
+        }
+      },
+      {
+        "set": {
+          "field": "vulnerability_finding.cve.enrichment_status",
+          "if": "ctx.lookedup_cve != null",
+          "value": true
+        }
+      },
+      {
+        "set": {
+          "field": "vulnerability_finding.cve.enrichment_status",
+          "if": "ctx.lookedup_cve == null",
+          "value": false
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.ssvc.automatable",
+          "copy_from": "lookedup_cve.cve.ssvc.automatable",
+          "if": "ctx.lookedup_cve?.cve?.id != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.ssvc.exploitation",
+          "copy_from": "lookedup_cve.cve.ssvc.exploitation",
+          "if": "ctx.lookedup_cve?.cve?.id != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.ssvc.technical_impact",
+          "copy_from": "lookedup_cve.cve.ssvc.technical_impact",
+          "if": "ctx.lookedup_cve?.cve?.id != null"
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.ssvc?.automatable != null) {
+                ctx.vulnerability_finding.cve.ssvc.automatable = ctx.vulnerability_finding.cve.ssvc.automatable.trim().toUpperCase();
+              }
+            } catch (Exception e) { ctx.vulnerability_finding.cve.dictionary_error = ["field": "automatable", "error": e.toString()];}
+          """
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.ssvc?.exploitation != null) {
+                ctx.vulnerability_finding.cve.ssvc.exploitation = ctx.vulnerability_finding.cve.ssvc.exploitation.trim().toUpperCase();
+              }
+            } catch (Exception e) { ctx.vulnerability_finding.cve.dictionary_error = ["field": "exploitation", "error": e.toString()];}
+          """
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.ssvc?.technical_impact != null) {
+                ctx.vulnerability_finding.cve.ssvc.technical_impact = ctx.vulnerability_finding.cve.ssvc.technical_impact.trim().toUpperCase();
+              }
+            } catch (Exception e) { ctx.vulnerability_finding.cve.dictionary_error = ["field": "technical_impact", "error": e.toString()];}
+          """
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.ssvc.version",
+          "copy_from": "lookedup_cve.cve.ssvc.version",
+          "if": "ctx.lookedup_cve?.cve?.id != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.ssvc.assessed_date",
+          "copy_from": "lookedup_cve.cve.ssvc.assessed_date",
+          "if": "ctx.lookedup_cve?.cve?.ssvc?.assessed_date != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.nvd_status",
+          "copy_from": "lookedup_cve.cve.nvd_status",
+          "if": "ctx.lookedup_cve?.cve?.nvd_status != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.state",
+          "copy_from": "lookedup_cve.cve.state",
+          "if": "ctx.lookedup_cve?.cve?.state != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.severity",
+          "copy_from": "lookedup_cve.cve.severity",
+          "if": "ctx.lookedup_cve?.cve?.severity != null"
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.state != null) {
+                ctx.vulnerability_finding.cve.state = ctx.vulnerability_finding.cve.state.trim().toUpperCase();
+              }
+            } catch (Exception e) { ctx.vulnerability_finding.cve.dictionary_error = ["field": "state", "error": e.toString()];}
+          """
+        }
+      },
+      {
+        "script": {
+          "source": """
+            try {
+              if (ctx.vulnerability_finding?.cve?.severity != null) {
+                ctx.vulnerability_finding.cve.severity = ctx.vulnerability_finding.cve.severity.trim().toUpperCase();
+              }
+            } catch (Exception e) { ctx.vulnerability_finding.cve.dictionary_error = ["field": "severity", "error": e.toString()];}
+          """
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.has_cvss",
+          "copy_from": "lookedup_cve.cve.has_cvss",
+          "if": "ctx.lookedup_cve?.cve?.has_cvss != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.has_ssvc",
+          "copy_from": "lookedup_cve.cve.has_ssvc",
+          "if": "ctx.lookedup_cve?.cve?.has_ssvc != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.cvss_base_score",
+          "copy_from": "lookedup_cve.cve.cvss_base_score",
+          "if": "ctx.lookedup_cve?.cve?.cvss_base_score != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.cve.cvss_base_score_version",
+          "copy_from": "lookedup_cve.cve.cvss_base_score_version",
+          "if": "ctx.lookedup_cve?.cve?.cvss_base_score_version != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.due_date",
+          "copy_from": "lookedup_cve.kev.due_date",
+          "if": "ctx.lookedup_cve?.kev?.due_date != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.date_added",
+          "copy_from": "lookedup_cve.kev.date_added",
+          "if": "ctx.lookedup_cve?.kev?.date_added != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.required_action",
+          "copy_from": "lookedup_cve.kev.required_action",
+          "if": "ctx.lookedup_cve?.kev?.required_action != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.name",
+          "copy_from": "lookedup_cve.kev.name",
+          "if": "ctx.lookedup_cve?.kev?.name != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.notes",
+          "copy_from": "lookedup_cve.kev.notes",
+          "if": "ctx.lookedup_cve?.kev?.notes != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.product",
+          "copy_from": "lookedup_cve.kev.product",
+          "if": "ctx.lookedup_cve?.kev?.product != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.known_ransomware_use",
+          "copy_from": "lookedup_cve.kev.known_ransomware_use",
+          "if": "ctx.lookedup_cve?.kev?.known_ransomware_use != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.vendor",
+          "copy_from": "lookedup_cve.kev.vendor",
+          "if": "ctx.lookedup_cve?.kev?.vendor != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.description",
+          "copy_from": "lookedup_cve.kev.description",
+          "if": "ctx.lookedup_cve?.kev?.description != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.kev.in_catalog",
+          "copy_from": "lookedup_cve.kev.in_catalog",
+          "if": "ctx.lookedup_cve?.kev?.in_catalog != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "override": true,
+          "field": "vulnerability_finding.directive.id",
+          "copy_from": "lookedup_cve.directive.id",
+          "if": "ctx.lookedup_cve?.directive?.id != null"
+        }
+      },
+      {
+        "set": {
+          "field": "vulnerability_finding.cve.severity",
+          "if": "ctx.lookedup_cve?.cve?.severity == null",
+          "value": "-"
+        }
+      },
+      {
+        "script": {
+          "source": """        String errors="";
+        // check for required host fields to build id
+        if( !(ctx.host instanceof HashMap)) {
+          errors += ";host is null or invalid type. ("+ctx.host+")";
+        }
+        else if(ctx.host.id == null) { errors += ";host.id is null"; }
+        else if(ctx.host.id.length() == 0) { errors += ";host.id is empty"; }
+        
+        //check for required vuln fields to build id
+        if(!(ctx.vulnerability_finding instanceof HashMap) )
+        {
+          errors += ";vulnerability_finding is null or invalid type. ("+ctx.vulnerability_finding+")";
+        }
+        else if(!(ctx.vulnerability_finding.cve instanceof HashMap)) {
+          errors += ";vulnerability_finding.cve is null or invalid type. ("+ctx.vulnerability_finding.cve+")";
+        }
+        else if(ctx.vulnerability_finding.cve.id == null) { errors += ";vulnerability_finding.cve.id is null"; }
+        else if(ctx.vulnerability_finding.cve.id.length() == 0) { errors += ";vulnerability_finding.cve.id is empty"; }
+        
+        //Populate Organization fields from Path
+        String org_path_errors="";
+        if(ctx.organization instanceof HashMap )
+        {
+          if(ctx.organization.path!=null)
+          {
+            //Populate fields from Org Path
+            def path = ctx.organization.path;
+            
+            if( path ==~ /^[\\]{2,2}.*/ &&  path ==~ /[^\/]+/ )
+            {
+              
+              ctx.organization.deprecatedPath = ctx.organization.path;
+              
+              String[] parts = /\\/.split(path);
+              List list =  Arrays.asList(parts);
+              list = list.stream().filter(item-> !item.isEmpty() && item.toLowerCase()!="org").collect(Collectors.toList());
+              
+              //Convert to new Format
+              if(list.size()>1)
+              {
+                path = String.join("/", list);
+              }
+              else
+              {
+                ctx.organization.remove("deprecatedPath");
+                
+                org_path_errors += ";Invalid organization.path value. The organization path is supplied in old format but the value is not valid for an organization.";
+              }
+              
+            }
+            
+            if(org_path_errors.length()==0)
+            {
+              if (path ==~ /^[a-zA-Z].*/ && path ==~ /.*[^\/]$/ )
+              {
+                ctx.organization.path = path;
+                
+                //Split
+                String[] splittedPath= /\//.split(path);
+                if(splittedPath[0].toLowerCase()=="org")
+                {
+                  org_path_errors+= ";Invalid organization.path value. The organization path is supplied in new format but the value of tier0 organization is not valid for an organization.";
+                } else 
+                {
+                  ctx.organization.tier = splittedPath.length-1;
+                  ctx.organization.tier0_id = splittedPath[0];
+                  ctx.organization.id = splittedPath[ctx.organization.tier];
+                  
+                  if(splittedPath.length>1)
+                  {
+                    ctx.organization.tier1_id = splittedPath[1];
+                    ctx.organization.parent = splittedPath[ctx.organization.tier -1];
+                    
+                  }else{
+                    ctx.organization.tier1_id ="-";
+                    ctx.organization.parent ="-";
+                  }
+				  
+				  if(splittedPath.length>2)
+				  {
+					ctx.organization.tier2_id = splittedPath[2];
+				  }else{
+					ctx.organization.tier2_id = "-";
+				  }
+				  
+				  if(splittedPath.length>3)
+				  {
+					ctx.organization.tier3_id = splittedPath[3];
+				  }else{
+					ctx.organization.tier3_id = "-";
+				  }
+                }
+              }else{
+                
+                //Add Error and Reject to errors index
+                org_path_errors += ";Invalid organization.path value. The new format of Organization path can only begin with an alphabet and can not end with a forward slash( / )";
+              }
+            }
+            
+          }
+          else
+          {
+            org_path_errors += "; Missing organization.path. It is a key field that must be supplied."; 
+          }
+          
+        } else {
+          org_path_errors += "; Organization object is missing.";
+        } 
+        errors+=org_path_errors;
+        //End Populate Organization fields from Path
+        
+        if(errors.length() > 0) {
+          ctx._index = "cdm_errors_vuln";
+          ctx._error = new HashMap();
+          ctx._error.message = errors;
+          ctx._error.source = "cdm_vuln_final";
+        }
+        else {
+          ctx._id = ctx.host.id + "-" + ctx.vulnerability_finding.cve.id;
+          ctx.cdm_doc_id = ctx._id;
+          ctx._index = "cdm_vuln";
+        }"""
+        }
+      },
+      {
+        "script": {
+          "description": "if doc _id is too long, the document will throw an error on ingest and get dropped.  This processor will drop the _id field if too long, and will instead route the document to the errors index.",
+          "source": """             if (ctx._id.length() > params.max_length) {
+               ctx._id = null;
+               
+               throw new Exception(String.format("The document ID, which is set to equal the value of the host.id plus the vulnerability_finding.cve.id field, exceeded the allowable length of %s.  Correct the source data and reingest.", new def[] {params.max_length}));
+             }""",
+          "params": {
+            "max_length": 512
+          }
+        }
+      },
+      {
+        "enrich": {
+          "ignore_failure": true,
+          "policy_name": "cdm_vuln_cve",
+          "field": "vulnerability_finding.cve.id",
+          "target_field": "lookedup",
+          "if": "ctx._index != 'cdm_errors_vuln'"
+        }
+      },
+      {
+        "script": {
+          "description": "Data quality checks",
+          "source": """    // Beginning of helper functions
+        boolean fieldCheckMissing(def field) {
+          return field == null 
+            || (field instanceof String && field.isEmpty()) 
+            || ((field instanceof Map || field instanceof Collection) && field.isEmpty());
+        }
+        String normalizeString(def value) {
+          def normalized_value = "-";
+          if (!fieldCheckMissing(value) && value instanceof String) {
+            normalized_value = value.toUpperCase().trim();
+          }
+          return normalized_value;
+        }
+        String getSimpleType(Object x) {
+          if (x instanceof Integer) return "integer";
+          if (x instanceof Float) return "float";
+          if (x instanceof Long) return "long";
+          if (x instanceof Double) return "double";
+          if (x instanceof Boolean) return "boolean";
+          if (x instanceof String) return "string";
+          if (x instanceof Date) return "date";
+          if (x instanceof Map) return "map";
+          if (x instanceof Set) return "set";
+          if (x instanceof List) return "list";
+          return "unknown";
+        }
+        boolean validDateFormat(Object x) {
+          try {
+            ZonedDateTime.parse(x.toString(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            return true;
+          }catch (Exception ex)
+          {
+            return false;
+          }
+        }
+        // End of helper functions
+        // Beginning of FieldRule functions
+        def getCheckedFields(def source, def rules_param) {
+          def all_field_names = new HashSet();
+          for (entry in rules_param.entrySet()) {
+            all_field_names.add(entry.getKey());
+          }
+          return all_field_names;
+        }
+        ArrayList getFieldRules(def source, def rules_param) {
+          ArrayList fields = new ArrayList();
+          for (entry in rules_param.entrySet()) {
+            def field_name = entry.getKey();
+            def field = source;
+            for (String seg : field_name.splitOnToken(".")) {
+              if (field instanceof Map && !field.containsKey(seg)) { field = null; break; }
+              field = field[seg];
+            }
+            fields.add(['field_name': field_name, 'field_value': field, 'cfg': entry.getValue()])
+          }
+          return fields;
+        }
+        boolean fieldRuleHandleRequired(def field_rule, def required_error) {
+          if(!field_rule["cfg"].containsKey("required")) return true;
+
+          def field_value = field_rule["field_value"];
+          def field_name = field_rule["field_name"];
+
+          boolean is_valid = !fieldCheckMissing(field_value);
+          if (!is_valid) { 
+            required_error.add(["field": field_name]); 
+          }
+          return is_valid;
+        }
+        boolean fieldRuleHandleExpectedType(def field_rule, def datatype_error, boolean legacy_mode) {
+          if(!field_rule["cfg"].containsKey("expected_type")) return true;
+
+          def field_value = field_rule["field_value"];
+          def field_name = field_rule["field_name"];
+          def expected_type = field_rule["cfg"]["expected_type"];
+
+          def message = null;
+          def supplied_type = getSimpleType(field_value);
+          // The old functions seem to expect float for double.
+          if (legacy_mode && supplied_type == "double") supplied_type = "float";
+
+          if (expected_type == "date") {
+            if (!validDateFormat(field_value)) {
+              message = "Invalid Date Format. An ISO-8601 Date/Time value is expected.";
+            }
+          }else if (expected_type != supplied_type){
+            message = "Invalid Data Type. " + expected_type + " value is expected. But " + supplied_type + " type is supplied.";
+          }
+
+          boolean is_valid = (message == null);
+          if (!is_valid) {
+            datatype_error.add(["field": field_name, "value": field_value, "message": message]);
+          }
+          return is_valid;
+        }
+        boolean fieldRuleHandleEnumerated(def field_rule, def enumerated_error) {
+          if(!field_rule["cfg"].containsKey("enumerated")) return true;
+
+          def field_value = field_rule["field_value"];
+          def field_name = field_rule["field_name"];
+          def expected_values = field_rule["cfg"]["enumerated"];
+          def message = "Invalid value. Please reference the published data target documentation list of accepted values for this field.";
+
+          boolean is_valid = expected_values.contains(normalizeString(field_value));
+          if (!is_valid) {
+            enumerated_error.add(["field": field_name, "value": field_value, "message": message ]); 
+          }
+          return is_valid;
+        }
+        // End of FieldRule functions
+        //Beginning of DQ Functions
+        String checkDateFormat(Object x)
+        {
+          try {
+            ZonedDateTime zdt= ZonedDateTime.parse(x.toString(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            return "date";
+          }catch (Exception ex)
+          {
+            return "unknown";
+          }
+        }
+
+        void addTypeDQ(ArrayList dqList, String fieldName, Object val, String expectedType)
+        {
+          // Temporary wrapper function. Eventually all usage of addTypeDQ should use field rule.
+          def field_rule = ['field_name': fieldName, 'field_value': val, 'cfg': new HashMap()];
+          field_rule['cfg'].put('expected_type', expectedType);
+          if (val!=null) {
+            fieldRuleHandleExpectedType(field_rule, dqList, true);    
+          }                
+        }
+
+        void addTypeDQToObjectArray(ArrayList dqList, Map ctx, String parentObjectName, Map fieldNameAndType)
+        {
+          if(ctx[parentObjectName] instanceof ArrayList)
+          {
+            
+            for(int i; i<ctx[parentObjectName].size();i++)
+            { 
+              
+              fieldNameAndType.forEach((k, v) -> {
+                if(ctx[parentObjectName][i]!=null && ctx[parentObjectName][i][k] !=null){
+                  addTypeDQ(dqList, parentObjectName + "[" + i + "]" + "." + k, ctx[parentObjectName][i][k] ,v);
+                }
+                return null;
+              });
+              
+            }
+            
+          }
+          else if( ctx[parentObjectName] !=null )
+          {
+            fieldNameAndType.forEach((k, v) -> {
+              if(ctx[parentObjectName][k]!=null){
+                addTypeDQ(dqList, parentObjectName + "." + k, ctx[parentObjectName][k] ,v);
+              }
+              return null;
+            });
+          } 
+          
+        }
+        
+        
+        void addTypeDQToLevel2ObjectArray(ArrayList dqList, Map ctx,String grandParentObjectName, String parentObjectName, Map fieldNameAndType)
+        {
+          if(ctx[grandParentObjectName] instanceof ArrayList)
+          {
+            for(int j; j<ctx[grandParentObjectName].size();j++)
+            {
+              if(ctx[grandParentObjectName][j][parentObjectName] instanceof ArrayList)
+              {
+                
+                for(int i; i<ctx[grandParentObjectName][j][parentObjectName].size();i++)
+                { 
+                  
+                  fieldNameAndType.forEach((k, v) -> {
+                    if(ctx[grandParentObjectName][j][parentObjectName][i]!=null && ctx[grandParentObjectName][j][parentObjectName][i][k]!=null){
+                      addTypeDQ(dqList, grandParentObjectName + "[" + j + "]." + parentObjectName + "[" + i + "]" + "." + k, ctx[grandParentObjectName][j][parentObjectName][i][k] ,v);
+                    }
+                    return null;
+                  });
+                  
+                }
+                
+              }
+              else if( ctx[grandParentObjectName][j][parentObjectName] !=null )
+              {
+                fieldNameAndType.forEach((k, v) -> {
+                  if(ctx[grandParentObjectName][j][parentObjectName]!=null && ctx[grandParentObjectName][j][parentObjectName][k]!=null){
+                    addTypeDQ(dqList, grandParentObjectName + "[" + j + "]." + parentObjectName + "." + k, ctx[grandParentObjectName][j][parentObjectName][k] ,v);
+                  }
+                  return null; 
+                });
+              }
+            }
+          }
+          else if(ctx[grandParentObjectName] !=null)
+          {
+            if(ctx[grandParentObjectName][parentObjectName] instanceof ArrayList)
+            {
+              
+              for(int i; i<ctx[grandParentObjectName][parentObjectName].size();i++)
+              { 
+                
+                fieldNameAndType.forEach((k, v) -> {
+                  if(ctx[grandParentObjectName][parentObjectName][i]!=null && ctx[grandParentObjectName][parentObjectName][i][k]!=null )
+                  {
+                    addTypeDQ(dqList, grandParentObjectName + "." + parentObjectName + "[" + i + "]" + "." + k, ctx[grandParentObjectName][parentObjectName][i][k] ,v);
+                  }
+                  return null;
+                });
+                
+              }
+              
+            }
+            else if(ctx[grandParentObjectName][parentObjectName] instanceof HashMap && ctx[grandParentObjectName][parentObjectName] !=null  )
+            {
+              fieldNameAndType.forEach((k, v) -> {
+                if(ctx[grandParentObjectName][parentObjectName][k]!=null )
+                {
+                  addTypeDQ(dqList, grandParentObjectName + "." + parentObjectName + "." + k, ctx[grandParentObjectName][parentObjectName][k] ,v);
+                }
+                return null;
+              });
+            }
+            
+            
+          }
+        }
+        
+        //End of DQ Functions
+        
+        ArrayList required_error = new ArrayList();
+        ArrayList enumerated_error = new ArrayList();
+        ArrayList datatype_error = new ArrayList();
+        ArrayList deprecated_error = new ArrayList();
+        
+        HashMap enumerated_value = new HashMap();
+        HashMap message = new HashMap();
+        HashMap myFields = null;
+        
+        // == System boundary checks and sets == //
+        // This is done here because these fields and funcs are not global, and would require a refactor.
+        if(ctx.system_boundary instanceof HashMap == false || fieldCheckMissing(ctx.system_boundary)) {
+          ctx.system_boundary = new HashMap();
+          required_error.add(["field": "system_boundary"]);
+        }else {
+          // This override disables the system boundary level logic
+          // until we are ready to start ingesting paths (i.e. ux updates)
+          boolean disable_sb_path_ingestion = true;
+          if (disable_sb_path_ingestion) {
+            ctx.system_boundary.path = null;
+          }
+          // -> matches: ['test1/test2/test3', 'test1/test2', 'test1']
+          // -> does not match: ['///', 'test1//test3', 'test1/test2/', '/test1/test2/test3', '	est1']
+          def sb_path_pattern = /^[^\/|\\]+(\/[^\/]+)*$/;
+          int max_level_size = 3;
+          List level_list = new ArrayList();
+
+          // if no path is provided, we can assume that system_boundary.id is a sensible default
+          if (ctx.system_boundary.path == null || (ctx.system_boundary.path instanceof String && ctx.system_boundary.path.isEmpty())) { 
+            ctx.system_boundary.path = ctx.system_boundary.id; 
+          }
+
+          // step 1: split the path into pieces by '/', and verify that its in our desired format
+          if (ctx.system_boundary.path instanceof String && ctx.system_boundary.path ==~ sb_path_pattern){
+            String[] sb_parts = /\//.split(ctx.system_boundary.path);
+            level_list = Arrays.asList(sb_parts);
+          }
+
+          // step 2: set values for all of our level fields. a level of '-1' indicates that no id or valid path exists.
+          int level = level_list.size() - 1;
+          ctx.system_boundary.level = level;
+          for (int i = 0; i < max_level_size; i++) {
+            String level_name = "level" + i + "_id";
+            ctx.system_boundary.put(level_name, (0 <= i && i <= level) ? level_list[i] : '-');
+          }
+
+          // if the id doesn't exist, we can try to populate it if the path does.
+          if (level >= 0 && (ctx.system_boundary.id == null || ctx.system_boundary.id.length() == 0)){
+            ctx.system_boundary.id = level_list[level];
+          }
+        }
+        // == End system boundary checks and sets == //
+        
+        //Data Quality Required fields
+        
+        //Required Check
+
+        // For now, this just checks system_boundary.path, system_boundary.level, system_boundary.level{x}_id, host.exposed_to_internet.
+        // This function is generalizable to the rest, but this is out of scope for now. We can also set default values for sb path here.
+        for (field_rule in getFieldRules(ctx, params.field_rules)){
+          // Step #1: Track each field rule: did it pass or not? If the we aren't checking for it, the rule is always true.
+          boolean rule_passed_required = fieldRuleHandleRequired(field_rule, required_error);
+          boolean rule_passed_expected_type = false;
+          boolean rule_passed_enumerated = false;
+
+          // No point in continuing the other checks if the required field doesn't exist.
+          if (rule_passed_required) {
+            rule_passed_expected_type = fieldRuleHandleExpectedType(field_rule, datatype_error, false);
+            rule_passed_enumerated = fieldRuleHandleEnumerated(field_rule, enumerated_error);
+          }
+
+          // Step #2: Set values based on if the rule passed or not.
+          def name = field_rule["field_name"];
+          if (name == "host.exposed_to_internet") {
+            def exposed_to_internet = "-";
+            if (rule_passed_required) {
+              exposed_to_internet = (rule_passed_expected_type && rule_passed_enumerated) ? normalizeString(ctx.host.exposed_to_internet) : "UNKNOWN";
+            }
+            ctx.host.exposed_to_internet = exposed_to_internet;
+          }
+        }
+
+        if (ctx.system_boundary.path == null || (ctx.system_boundary.path instanceof String && ctx.system_boundary.path.isEmpty())){
+          ctx.system_boundary.path = "-";
+        }
+
+        if(ctx.host.authorized == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.authorized");
+          required_error.add(hmap);
+        }
+
+        if(ctx.host.is_ephemeral == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.is_ephemeral");
+          required_error.add(hmap);
+        }
+
+        if(ctx.host.in_production == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.in_production");
+          required_error.add(hmap);
+          ctx.host.in_production = true;
+        }
+        
+        if(ctx.host.make == null || (ctx.host.make instanceof String && ctx.host.make.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.make");
+          required_error.add(hmap);
+          ctx.host.make = "-";
+        }
+        
+        if(ctx.host.model == null || (ctx.host.model instanceof String && ctx.host.model.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.model");
+          required_error.add(hmap);
+          ctx.host.model = "-";
+        }
+        
+        if(ctx.host.name == null || (ctx.host.name instanceof String && ctx.host.name.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.name");
+          required_error.add(hmap);
+          ctx.host.name = "-";
+        }
+        
+        
+        if(ctx.host.system_boundary_assignment_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.system_boundary_assignment_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.host.first_found_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.first_found_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.host.last_seen_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.last_seen_date");
+          required_error.add(hmap);
+        }
+        
+        
+        if(ctx.vulnerability_finding.days_active == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.days_active");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.risk_accepted == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.risk_accepted");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.organization.name == null || (ctx.organization.name instanceof String && ctx.organization.name.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "organization.name");
+          required_error.add(hmap);
+          ctx.organization.name = "-";
+        }
+        
+        if(ctx.system_boundary.authorized == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.authorized");
+          required_error.add(hmap);
+        }
+
+		if(ctx.system_boundary.hva_status == null)
+		{
+			HashMap hmap = new HashMap();
+			hmap.put("field", "system_boundary.hva_status");
+			required_error.add(hmap);
+		}
+
+        if(ctx.system_boundary.id == null || (ctx.system_boundary.id instanceof String && ctx.system_boundary.id.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.id");
+          required_error.add(hmap);
+          ctx.system_boundary["id"] = "-";
+        }
+        
+        if(ctx.system_boundary.authorization_decision_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.authorization_decision_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding == null)
+        {
+          ctx.vulnerability_finding = new HashMap();
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding");
+          required_error.add(hmap);
+          
+        }
+        
+        if(ctx.vulnerability_finding.cve == null)
+        {
+          ctx.vulnerability_finding.cve = new HashMap();
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.cve");
+          required_error.add(hmap);
+          
+        }
+        
+        if(ctx.vulnerability_finding.cve.id == null || (ctx.vulnerability_finding.cve.id instanceof String && ctx.vulnerability_finding.cve.id.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.cve.id");
+          required_error.add(hmap);
+          ctx.vulnerability_finding.cve.id = "UNKNOWN";
+          
+        }
+        
+        if(ctx.vulnerability_finding.cve.cvss_base_score == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.cve.cvss_base_score");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.first_found_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.first_found_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.last_found_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.last_found_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.remediated == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.remediated");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.remediated == true)
+        if(ctx.vulnerability_finding.remediated_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.remediated_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.vulnerability_finding.detection_signature_id == null || ctx.vulnerability_finding.detection_signature_id.isEmpty())
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.detection_signature_id");
+          required_error.add(hmap);
+          ctx.vulnerability_finding.detection_signature_id = "-";
+        } else if(ctx.vulnerability_finding.detection_signature_id != null) {
+          if(ctx.vulnerability_finding.detection_signature_id instanceof ArrayList && (!ctx.vulnerability_finding.detection_signature_id.isEmpty())) {
+            boolean found_error = false;
+            for(int i = 0; i < ctx.vulnerability_finding.detection_signature_id.length; i++) {
+              if(fieldCheckMissing(ctx.vulnerability_finding.detection_signature_id[i]))
+              {
+                found_error = true;
+                HashMap hmap = new HashMap();
+                hmap.put("field", "vulnerability_finding.detection_signature_id[" + i + "]");
+                hmap.put("value", ctx.vulnerability_finding.detection_signature_id[i]);
+                hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+                required_error.add(hmap);
+              }
+            }
+            if(found_error) {
+              ctx.vulnerability_finding.detection_signature_id = "-";
+            }
+          }
+        }
+        
+        //Required device_scan.id
+        if(ctx.device_scan == null || ctx.device_scan.isEmpty()) 
+        { 
+          ctx.device_scan = new HashMap();
+          HashMap hmap = new HashMap();
+          hmap.put("field", "device_scan");
+          required_error.add(hmap); 
+          
+        } else {
+          
+          if(ctx.device_scan.id == null || (ctx.device_scan.id instanceof String && ctx.device_scan.id.isEmpty()))
+          { 
+            HashMap hmap = new HashMap();
+            hmap.put("field", "device_scan.id");
+            required_error.add(hmap);
+            ctx.device_scan["id"] = "-"; 
+            
+          }
+        }
+        
+        if(ctx.device_scan.scan_date == null)
+        { 
+          HashMap hmap = new HashMap();
+          hmap.put("field", "device_scan.scan_date");
+          required_error.add(hmap);
+        }
+        
+        if(ctx.device_scan.credentialed == null)
+        { 
+          HashMap hmap = new HashMap();
+          hmap.put("field", "device_scan.credentialed");
+          required_error.add(hmap);
+        }
+        
+        
+        if(ctx.device_scan.observer == null || ctx.device_scan.observer.isEmpty()){
+          HashMap hmap = new HashMap();
+          hmap.put("field", "device_scan.observer.nvd_last_update_date");
+          required_error.add(hmap);
+        }
+        else if(ctx.device_scan.observer !=null && !ctx.device_scan.observer.isEmpty() && ctx.device_scan.observer.nvd_last_update_date == null)
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "device_scan.observer.nvd_last_update_date");
+          required_error.add(hmap);
+        }
+        
+        
+        //required host.interface required check
+        if(ctx.host.interface == null || (ctx.host.interface instanceof String && ctx.host.interface.isEmpty()))
+        {
+          ctx.host.interface = new HashMap();
+          HashMap hmap= new HashMap();
+          hmap.put("field", "host.interface");
+          required_error.add(hmap);
+          
+        }
+        
+        //check for interface null/""/array
+        if(ctx.host != null && ctx.host.interface != null) {
+          
+          if(ctx.host.interface instanceof ArrayList && (!(ctx.host.interface.isEmpty()))) {
+            if(ctx.host.interface.size()>0) {
+              
+              //Loop through interface array
+              for( int i=0; i < ctx.host.interface.length; i++) {
+                
+                if(ctx.host.interface[i] instanceof HashMap) {
+                  //after loop check for null/""
+                  if(ctx.host.interface[i] != null && (!(ctx.host.interface[i].isEmpty()))) {
+                    
+                    //check required_error interface array fields
+                    if(ctx.host.interface[i].ip == null || ctx.host.interface[i].ip instanceof String && ctx.host.interface[i].ip.isEmpty()) {
+                      HashMap hmap = new HashMap();
+                      String s = "host.interface[" + i + "].ip";
+                      hmap.put("field", s);
+                      required_error.add(hmap);
+                      
+                    }
+                    
+                    if(ctx.host.interface[i].mac == null || ctx.host.interface[i].mac instanceof String && ctx.host.interface[i].mac.isEmpty()) {
+                      HashMap hmap = new HashMap();
+                      String s = "host.interface[" + i + "].mac";
+                      hmap.put("field", s);
+                      required_error.add(hmap);
+                      ctx.host.interface[i].mac = "-";
+                    }
+                    
+                    if(ctx.host.interface[i].name == null || ctx.host.interface[i].name instanceof String && ctx.host.interface[i].name.isEmpty()) {
+                      HashMap hmap = new HashMap();
+                      String s = "host.interface[" + i + "].name";
+                      hmap.put("field", s);
+                      required_error.add(hmap);
+                      ctx.host.interface[i].name = "-";
+                    }
+                  }
+                }
+              }
+            }      
+          }
+          
+          else {
+            //check for single object
+            //within object check if ip is an null/""/array
+            //"interface": "10.10.10.100"
+            if (ctx.host.interface instanceof Map ) {
+              //check required_error interface array fields
+              if(ctx.host.interface.ip == null || ctx.host.interface.ip instanceof String && ctx.host.interface.ip.isEmpty()) {
+                HashMap hmap= new HashMap();
+                hmap.put("field", "host.interface.ip");
+                required_error.add(hmap);
+                
+              }
+              
+              if(ctx.host.interface.mac == null || ctx.host.interface.mac instanceof String && ctx.host.interface.mac.isEmpty()) {
+                HashMap hmap= new HashMap();
+                hmap.put("field", "host.interface.mac");
+                required_error.add(hmap);
+                ctx.host.interface.mac = "-";
+                
+              }
+              
+              if(ctx.host.interface.name == null || ctx.host.interface.name instanceof String && ctx.host.interface.name.isEmpty()) {
+                HashMap hmap= new HashMap();
+                hmap.put("field", "host.interface.name");
+                required_error.add(hmap);
+                ctx.host.interface.name = "-";
+                
+              }
+            }
+          }
+        } 
+        
+        if(ctx.host.services == null){
+          ctx.host.services = new HashMap();
+          required_error.add(["field": "host.services"]);
+        }
+        if(ctx.host.services.active_directory == null )
+        {
+          required_error.add(["field": "host.services.active_directory"]);
+        }
+        if(ctx.host.services.exchange == null )
+        {
+          required_error.add(["field": "host.services.exchange"]);
+        }
+        if(ctx.host.services.domain_name == null )
+        {
+          required_error.add(["field": "host.services.domain_name"]);
+        }
+
+        // vulnerability_finding.affected_software required check
+        if(ctx.vulnerability_finding.affected_software == null || (ctx.vulnerability_finding.affected_software instanceof String && ctx.vulnerability_finding.affected_software.isEmpty()))
+        {
+          ctx.vulnerability_finding.affected_software = new HashMap();
+          HashMap hmap = new HashMap();
+          hmap.put("field", "vulnerability_finding.affected_software");
+          required_error.add(hmap);
+        }
+        
+        // Check required_error for vulnerability_finding.affected_software fields
+        if(ctx.vulnerability_finding != null && ctx.vulnerability_finding.affected_software != null && !(ctx.vulnerability_finding.affected_software instanceof String && ctx.vulnerability_finding.affected_software.isEmpty()))
+        {
+          if(ctx.vulnerability_finding.affected_software.installation_file_path == null || (ctx.vulnerability_finding.affected_software.installation_file_path instanceof String && ctx.vulnerability_finding.affected_software.installation_file_path.isEmpty()))
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.affected_software.installation_file_path");
+            required_error.add(hmap);
+            ctx.vulnerability_finding.affected_software.installation_file_path = "-";
+          }
+          if(ctx.vulnerability_finding.affected_software.product == null || (ctx.vulnerability_finding.affected_software.product instanceof String && ctx.vulnerability_finding.affected_software.product.isEmpty()))
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.affected_software.product");
+            required_error.add(hmap);
+            ctx.vulnerability_finding.affected_software.product = "-";
+          }
+          if(ctx.vulnerability_finding.affected_software.vendor == null || (ctx.vulnerability_finding.affected_software.vendor instanceof String && ctx.vulnerability_finding.affected_software.vendor.isEmpty()))
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.affected_software.vendor");
+            required_error.add(hmap);
+            ctx.vulnerability_finding.affected_software.vendor = "-";
+          }
+          if(ctx.vulnerability_finding.affected_software.version == null || (ctx.vulnerability_finding.affected_software.version instanceof String && ctx.vulnerability_finding.affected_software.version.isEmpty()))
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.affected_software.version");
+            required_error.add(hmap);
+            ctx.vulnerability_finding.affected_software.version = "-";
+          }
+        }
+        
+        //Data Quality Enumerated Fields
+        
+        //enumerated device_scan.auth_outcome
+        if(ctx.device_scan !=null)
+        {
+          if(ctx.device_scan.credentialed == true && ctx.device_scan.auth_outcome == null ) 
+          {
+            HashMap hmap = new HashMap();
+            hmap.put("field", "device_scan.auth_outcome");
+            required_error.add(hmap);
+            ctx.device_scan.auth_outcome = "-";
+          }
+          else if(ctx.device_scan.auth_outcome != null && !ctx.device_scan.auth_outcome.isEmpty() && ["SUCCESS","FAIL"].contains(ctx.device_scan.auth_outcome) == false)
+          {
+            enumerated_value["device_scan.auth_outcome"]=ctx.device_scan.auth_outcome;
+            
+            HashMap hmap= new HashMap();
+            hmap.put("field", "device_scan.auth_outcome");
+            hmap.put("value", ctx.device_scan.auth_outcome);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.device_scan.auth_outcome = "UNKNOWN";
+            
+          }
+          
+          // `device_scan.method`
+          if(ctx.device_scan instanceof Map)
+          {
+            if(ctx.device_scan.method != null && !(ctx.device_scan.method instanceof String && ctx.device_scan.method.isEmpty()) && ["Agent-based", "Network-based"].contains(ctx.device_scan.method) == false)
+            {
+              enumerated_error.add([
+                "field"  :  "device_scan.method",
+                "value"  :  ctx.device_scan.method,
+                "message"  : "Invalid value. Please reference the published data target documentation list of accepted values for this field."
+                ]);
+                ctx.device_scan.method = "UNKNOWN";
+            }
+          }
+          else if(ctx.device_scan instanceof ArrayList)
+          {
+            for(int i = 0; i < ctx.device_scan.size(); i++)
+            {
+              if(ctx.device_scan[i].method != null && !(ctx.device_scan[i].method instanceof String && ctx.device_scan[i].method.isEmpty())&& ["Agent-based", "Network-based"].contains(ctx.device_scan[i].method) == false)
+              {
+                enumerated_value["device_scan[i].auth_outcome"]=ctx.device_scan[i].auth_outcome;
+                enumerated_error.add([
+                  "field"  :  "device_scan[" + i + "].method",
+                  "value"  :  ctx.device_scan[i].method,
+                  "message"  : "Invalid value. Please reference the published data target documentation list of accepted values for this field."
+                  ]);
+                  ctx.device_scan[i].method = "UNKNOWN";
+              }
+            }
+          }
+          
+          //required device_scan.type
+          if(ctx.device_scan.type == null || ctx.device_scan.type instanceof String && ctx.device_scan.type.isEmpty())
+          {
+            HashMap hmap = new HashMap();
+            hmap.put("field", "device_scan.type");
+            required_error.add(hmap);
+            ctx.device_scan.type = "-";
+            
+          }
+          //enumerated device_scan.type 
+          else if( ctx.device_scan.type != null && ["CSM","VUL","SWAM","HWAM"].contains(ctx.device_scan.type) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "device_scan.type");
+            hmap.put("value", ctx.device_scan.type);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.device_scan.type = "UNKNOWN";
+            
+          }
+          
+          
+          // Check device_scan.observer.type Array Values
+          
+          ArrayList validObserverTypes = ["VUL","CSM","MTD","HWAM","SWAM","EMM"];
+          
+          //enumerated device_scan.observer.type
+          if(ctx.device_scan.observer != null && !ctx.device_scan.observer.isEmpty())
+          {
+            if(ctx.device_scan.observer.type != null && !ctx.device_scan.observer.type.isEmpty())
+            {
+              if(!(ctx.device_scan.observer.type instanceof ArrayList)) {
+                
+                if(validObserverTypes.contains(ctx.device_scan.observer.type) == false)
+                {
+                  HashMap hmap= new HashMap();
+                  hmap.put("field", "device_scan.observer.type");
+                  hmap.put("value", ctx.device_scan.observer.type);
+                  hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+                  ctx.device_scan.observer.type= "UNKNOWN";
+                  enumerated_error.add(hmap);
+                  
+                }
+                
+              } else {
+                
+                ArrayList invalidValues = new ArrayList();
+                for (String observerType: ctx.device_scan.observer.type)
+                {
+                  if(validObserverTypes.contains(observerType) == false)
+                  {
+                    HashMap hmap= new HashMap();
+                    hmap.put("field", "device_scan.observer.type");
+                    hmap.put("value", observerType);
+                    hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+                    invalidValues.add(observerType);
+                    enumerated_error.add(hmap);
+                  }
+                }
+                
+                //Replace invalid values with UNKNOWN
+                ctx.device_scan.observer.type.replaceAll( x-> {
+                  if (invalidValues.contains(x)) return "UNKNOWN";
+                  else return x;
+                }
+                );
+              }
+            }
+          }
+          //end device_scan null check
+        }
+        
+        //Check Host.Type Array Values
+        
+        if(ctx.host.type == null || ctx.host.type.isEmpty())
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.type");
+          required_error.add(hmap);
+          ctx.host.type= "-";
+        }
+        
+        else {
+          
+          ArrayList validHostTypes = ["SERVER", "WORKSTATION", "VIRTUAL MACHINE", "OT ENGINEERING WORKSTATION", "OT CONTROL SERVER", "OT DATA HISTORIAN", "OT HUMAN MACHINE INTERFACE ON IT", "CAMERA", "PHYSICAL ACCESS CONTROL", "MOTION SENSOR", "GROUND RESPONSE ROBOT", "OTHER ENTERPRISE IOT", "IMAGING", "PATIENT MONITORING", "PATIENT CARE", "OTHER HEALTHCARE IOT", "SMARTPHONE", "TABLET", "OTHER MOBILE DEVICE", "MODEM", "ROUTER", "SWITCH", "BRIDGING DEVICE", "GATEWAY DEVICE", "WIRELESS ACCESS POINT", "INTRUSION DETECTION SYSTEM", "INTRUSION PREVENTION SYSTEM", "FIREWALL", "NETWORK ADDRESS TRANSLATOR", "HYBRID NETWORK ADDRESS TRANSLATOR", "LOAD BALANCER", "VPN", "ENCRYPTOR/DECRYPTOR", "PUBLIC KEY INFRASTRUCTURE", "CONTROLLER", "EMBEDDED HMI", "OTHER OT", "PRINTER", "SCANNER", "FAX PORTAL", "ACCESSIBLE STORAGE DEVICE", "VOICE OVER INTERNET PROTOCOL PHONE", "OTHER INFORMATION SECURITY MONITORING DEVICE", "OTHER DEVICE ADDRESSSIBLE ON THE NETWORK"];
+          
+          if(ctx.host.type!=null) {
+            if(ctx.host.type instanceof ArrayList && (!(ctx.host.type.isEmpty()))) {
+              for (int i=0; i < ctx.host.type.length; i++) {
+                if(validHostTypes.contains(ctx.host.type[i]) == false)
+                {
+                  HashMap hmap = new HashMap();
+                  String s = "host.type[" + i + "]";
+                  hmap.put("field", s);
+                  hmap.put("value", ctx.host.type[i]);
+                  hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+                  enumerated_error.add(hmap);
+                  ctx.host.type[i]= "UNKNOWN"
+                  
+                }
+              }
+            } else {
+              
+              if(validHostTypes.contains(ctx.host.type) == false)
+              {
+                
+                HashMap hmap= new HashMap();
+                hmap.put("field", "host.type");
+                hmap.put("value", ctx.host.type);
+                hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+                ctx.host.type= "UNKNOWN";
+                enumerated_error.add(hmap);
+                
+              }
+            }
+          }
+        }
+        
+        
+        if(ctx.host.category == null || (ctx.host.category instanceof String && ctx.host.category =="") )
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "host.category");
+          required_error.add(hmap);
+          ctx.host.category = "-";
+        }
+        else if(["NETWORKING DEVICE","ENDPOINT","MOBILE DEVICE","OTHER IO DEVICE","HEALTHCARE IOT","ENTERPRISE IOT","OPERATIONAL TECHNOLOGY"].contains(ctx.host.category) == false) 
+        {
+          HashMap hmap= new HashMap();
+          hmap.put("field", "host.category");
+          hmap.put("value", ctx.host.category);
+          hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+          enumerated_error.add(hmap);
+          ctx.host.category = "UNKNOWN";
+          
+        }
+        
+        if(ctx.host.status != null && !ctx.host.status.isEmpty() && ["ACTIVE","ACTIVE-VETTED","INACTIVE","QUARANTINED","BLOCKED","REMOVED"].contains(ctx.host.status) == false)
+        {
+          enumerated_value["host.status"]=ctx.host.status;
+          
+          HashMap hmap= new HashMap();
+          hmap.put("field", "host.status");
+          hmap.put("value", enumerated_value["host.status"]==null?"null value":enumerated_value["host.status"]==""?"empty string":enumerated_value["host.status"]);
+          hmap.put("message", "Invalid enumerated value, Must be one of [ ACTIVE, ACTIVE-VETTED, INACTIVE, QUARANTINED, BLOCKED, REMOVED ]");
+          enumerated_error.add(hmap);
+          
+          ctx.host.status = "UNKNOWN";
+          
+        }
+        
+        if(ctx.organization.type == null || ctx.organization.type instanceof String && ctx.organization.type.isEmpty())
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "organization.type");
+          required_error.add(hmap);
+          ctx.organization.type = "-"; 
+          
+        } else if( ctx.organization.type != null && ["GOVERNMENT", "CONTRACTOR"].contains(ctx.organization.type) == false ) 
+        {
+          
+          HashMap hmap= new HashMap();
+          hmap.put("field", "organization.type");
+          hmap.put("value", ctx.organization.type);
+          hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+          enumerated_error.add(hmap);
+          ctx.organization.type = "UNKNOWN";
+          
+        }
+        
+        
+        //Add Deprecated DQ
+        if(ctx.organization.deprecatedPath!=null)
+        {
+          HashMap hmap= new HashMap();
+          hmap.put("field", "organization.path");
+          hmap.put("value", ctx.organization.deprecatedPath);
+          hmap.put("message", "Organization Path is supplied in old format. Please supply Organization path in the new format (tier0/tier1/tier2...)");
+          
+          deprecated_error.add(hmap);
+          ctx.organization.remove("deprecatedPath");
+        } 
+        
+        //Check Facility.Type Array Values 
+        ArrayList validFacilityTypes = ["AGENCY DATA CENTER", "COLOCATION", "HOSTING PROVIDER", "OFFICE", "CAMPUS/HQ", "STORAGE"];
+        
+        
+        if(ctx.facility!=null && ctx.facility.type!=null && !ctx.facility.type.isEmpty())
+        {
+          if(!(ctx.facility.type instanceof ArrayList)) {
+            
+            if(validFacilityTypes.contains(ctx.facility.type) == false)
+            {
+              HashMap hmap= new HashMap();
+              hmap.put("field", "facility.type");
+              hmap.put("value", ctx.facility.type);
+              hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+              
+              ctx.facility.type= "UNKNOWN";
+              enumerated_error.add(hmap);
+              
+            }
+            
+          } else {
+            
+            ArrayList invalidValues = new ArrayList();
+            for (String facilityType: ctx.facility.type)
+            {
+              if(validFacilityTypes.contains(facilityType) == false)
+              {
+                HashMap hmap= new HashMap();
+                hmap.put("field", "facility.type");
+                hmap.put("value", facilityType);
+                hmap.put("message", "Invalid enumerated value. Accepted values are: " + validFacilityTypes);
+                
+                invalidValues.add(facilityType);
+                enumerated_error.add(hmap);
+                
+              }
+              
+            }
+            
+            //Replace invalid values with UNKNOWN
+            ctx.facility.type.replaceAll( x-> {
+              if (invalidValues.contains(x)) return "UNKNOWN";
+              else return x;
+            }
+            );
+          }
+        }
+        
+        
+        if(ctx.vulnerability_finding != null && ctx.vulnerability_finding.cve != null) {
+          if(ctx.vulnerability_finding.cve.attack_complexity != null && !ctx.vulnerability_finding.cve.attack_complexity.isEmpty() && ["HIGH","MODERATE","LOW"].contains(ctx.vulnerability_finding.cve.attack_complexity) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.cve.attack_complexity");
+            hmap.put("value", ctx.vulnerability_finding.cve.attack_complexity);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.vulnerability_finding.cve.attack_complexity = "UNKNOWN";
+          }
+          
+          if(ctx.vulnerability_finding.cve.privileges_required != null &&  !ctx.vulnerability_finding.cve.privileges_required.isEmpty() && ["HIGH","MODERATE","LOW"].contains(ctx.vulnerability_finding.cve.privileges_required) == false)  
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.cve.privileges_required");
+            hmap.put("value", ctx.vulnerability_finding.cve.privileges_required);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.vulnerability_finding.cve.privileges_required = "UNKNOWN";
+          }
+          
+          if(ctx.vulnerability_finding.cve.severity != null && !ctx.vulnerability_finding.cve.severity.isEmpty() && ["CRITICAL","HIGH","MEDIUM","LOW","NONE"].contains(ctx.vulnerability_finding.cve.severity) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "vulnerability_finding.cve.severity");
+            hmap.put("value", ctx.vulnerability_finding.cve.severity);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.vulnerability_finding.cve.severity = "UNKNOWN";
+          }
+        }
+        
+        
+        //System_boundary required & enumerated fields
+        if(ctx.system_boundary.fips_199_rating == null || (ctx.system_boundary.fips_199_rating instanceof String && ctx.system_boundary.fips_199_rating.isEmpty())) 
+        {
+          ctx.system_boundary.fips_199_rating = new HashMap();
+          
+          HashMap a = new HashMap();
+          a.put("field", "system_boundary.fips_199_rating.availability");
+          required_error.add(a);
+          ctx.system_boundary.fips_199_rating.availability = "-";
+          
+          HashMap c = new HashMap();
+          c.put("field", "system_boundary.fips_199_rating.confidentiality");
+          required_error.add(c);
+          ctx.system_boundary.fips_199_rating.confidentiality = "-";
+          
+          HashMap i = new HashMap();
+          i.put("field", "system_boundary.fips_199_rating.integrity");
+          required_error.add(i);
+          ctx.system_boundary.fips_199_rating.integrity = "-";
+        }
+        
+        else {
+          
+          if(ctx.system_boundary.fips_199_rating.availability == null || (ctx.system_boundary.fips_199_rating.availability instanceof String && ctx.system_boundary.fips_199_rating.availability.isEmpty()))
+          {
+            HashMap hmap = new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.availability");
+            required_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.availability = "-";
+          }
+          else if(ctx.system_boundary.fips_199_rating != null && ctx.system_boundary.fips_199_rating.availability != null && ["HIGH", "MODERATE", "LOW"].contains(ctx.system_boundary.fips_199_rating.availability) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.availability");
+            hmap.put("value", ctx.system_boundary.fips_199_rating.availability);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.availability = "UNKNOWN";
+          }
+          
+          if(ctx.system_boundary.fips_199_rating.confidentiality == null || (ctx.system_boundary.fips_199_rating.confidentiality instanceof String && ctx.system_boundary.fips_199_rating.confidentiality.isEmpty()))
+          {
+            HashMap hmap = new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.confidentiality");
+            required_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.confidentiality = "-";
+          }
+          else if(ctx.system_boundary.fips_199_rating != null && ctx.system_boundary.fips_199_rating.confidentiality != null && ["HIGH", "MODERATE", "LOW"].contains(ctx.system_boundary.fips_199_rating.confidentiality) == false) 
+          { 
+            HashMap hmap= new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.confidentiality");
+            hmap.put("value", ctx.system_boundary.fips_199_rating.confidentiality);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.confidentiality = "UNKNOWN";
+          }
+          
+          if(ctx.system_boundary.fips_199_rating.integrity == null || (ctx.system_boundary.fips_199_rating.integrity instanceof String && ctx.system_boundary.fips_199_rating.integrity.isEmpty()))
+          {
+            HashMap hmap = new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.integrity");
+            required_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.integrity = "-";
+          }
+          else if(ctx.system_boundary.fips_199_rating != null && ctx.system_boundary.fips_199_rating.integrity != null && ["HIGH", "MODERATE", "LOW"].contains(ctx.system_boundary.fips_199_rating.integrity) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "system_boundary.fips_199_rating.integrity");
+            hmap.put("value", ctx.system_boundary.fips_199_rating.integrity);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.system_boundary.fips_199_rating.integrity = "UNKNOWN"; 
+          }
+        }
+        
+        if(ctx.system_boundary.fips_impact_level == null || (ctx.system_boundary.fips_impact_level instanceof String && ctx.system_boundary.fips_impact_level.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.fips_impact_level");
+          required_error.add(hmap);
+          ctx.system_boundary.fips_impact_level = "-";
+        }
+        else if(ctx.system_boundary.fips_impact_level != null && ["HIGH", "MODERATE", "LOW"].contains(ctx.system_boundary.fips_impact_level) == false) 
+        {
+          HashMap hmap= new HashMap();
+          hmap.put("field", "system_boundary.fips_impact_level");
+          hmap.put("value", ctx.system_boundary.fips_impact_level);
+          hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+          enumerated_error.add(hmap);
+          ctx.system_boundary.fips_impact_level = "UNKNOWN";
+        }
+        
+        if(ctx.system_boundary.authorization_decision_type == null || (ctx.system_boundary.authorization_decision_type instanceof String && ctx.system_boundary.authorization_decision_type.isEmpty()))
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.authorization_decision_type");
+          required_error.add(hmap);
+          ctx.system_boundary.authorization_decision_type = "-";
+        }
+        else if(ctx.system_boundary.authorization_decision_type != null && ["Authorized to Operate (ATO)", "Common Control Authorization", "Authorization to Use", "Denial of Authorization"].contains(ctx.system_boundary.authorization_decision_type) == false) 
+        {
+          HashMap hmap= new HashMap();
+          hmap.put("field", "system_boundary.authorization_decision_type");
+          hmap.put("value",ctx.system_boundary.authorization_decision_type);
+          hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+          enumerated_error.add(hmap);
+          ctx.system_boundary.authorization_decision_type = "UNKNOWN";
+        }
+        
+        // add system_boundary.authorization_decision_expiration_date required error
+        boolean auth_true = ["Authorized to Operate (ATO)", "Common Control Authorization", "Authorization to Use"].contains(ctx.system_boundary.authorization_decision_type);
+        if (ctx.system_boundary.authorization_decision_expiration_date == null)
+        {
+          if (auth_true) 
+          {
+            if(ctx.system_boundary.authorization_type == null || (ctx.system_boundary.authorization_type != null && ctx.system_boundary.authorization_type != "Ongoing Authorization" )){
+              HashMap hmap = new HashMap();
+              hmap.put("field", "system_boundary.authorization_decision_expiration_date");
+              required_error.add(hmap);
+            }
+          }
+        }
+        
+        // add system_boundary.authorization_type enumerated error 
+        if (ctx.system_boundary.authorization_type != null)
+        {
+          if(ctx.system_boundary.authorization_type != "" && ["Initial Authorization", "Reauthorization", "Ongoing Authorization"].contains(ctx.system_boundary.authorization_type) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "system_boundary.authorization_type");
+            hmap.put("value",ctx.system_boundary.authorization_type);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.system_boundary.authorization_type = "UNKNOWN";
+          }
+        }
+        if(ctx.system_boundary.type == null || ctx.system_boundary.type instanceof String && ctx.system_boundary.type.isEmpty())
+        {
+          HashMap hmap = new HashMap();
+          hmap.put("field", "system_boundary.type");
+          required_error.add(hmap);
+          ctx.system_boundary.type = "-";
+        }
+        else if (ctx.system_boundary.type != null)
+        {
+          if(ctx.system_boundary.type != "" && ["CONTRACTOR", "GOVERNMENT"].contains(ctx.system_boundary.type) == false) 
+          {
+            HashMap hmap= new HashMap();
+            hmap.put("field", "system_boundary.type");
+            hmap.put("value",ctx.system_boundary.type);
+            hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+            enumerated_error.add(hmap);
+            ctx.system_boundary.type = "UNKNOWN";
+          }
+        }
+
+        // add enumerated DQ for host.os.type
+        if(ctx.host.os != null && ctx.host.os.type != null && !ctx.host.os.type.isEmpty() && ["linux", "macos", "unix", "windows", "ios", "android"].contains(ctx.host.os.type) == false)
+        {
+          HashMap hmap= new HashMap();
+          hmap.put("field", "host.os.type");
+          hmap.put("value", ctx.host.os.type);
+          hmap.put("message", "Invalid value. Please reference the published data target documentation list of accepted values for this field.");
+          
+          enumerated_error.add(hmap);
+          
+          ctx.host.os.type = "UNKNOWN";
+          
+        } 
+        
+        
+        if(ctx.device_scan!=null)
+        {
+          //Add DQ to childs of device_scan object array
+          myFields = new HashMap();
+          myFields.put("credentialed", "boolean");
+          myFields.put("scan_date", "date");
+          addTypeDQToObjectArray( datatype_error, ctx, "device_scan", myFields );
+          
+          //ADD DQ to second level object
+          myFields = new HashMap();
+          myFields.put("nvd_last_update_date", "date");
+          addTypeDQToLevel2ObjectArray( datatype_error, ctx, "device_scan", "observer", myFields );
+          
+        }
+        
+        if(ctx.host!=null){
+          addTypeDQ(datatype_error,"host.authorized",  ctx.host.authorized,"boolean");
+          addTypeDQ(datatype_error,"host.encrypted",  ctx.host.encrypted,"boolean");
+          addTypeDQ(datatype_error,"host.first_found_date",  ctx.host.first_found_date,"date");
+          addTypeDQ(datatype_error,"host.has_antiexploit_software",  ctx.host.has_antiexploit_software,"boolean");
+          addTypeDQ(datatype_error,"host.has_security_software",  ctx.host.has_security_software,"boolean");
+          addTypeDQ(datatype_error,"host.is_virtual",  ctx.host.is_virtual,"boolean");
+          addTypeDQ(datatype_error, "host.is_ephemeral", ctx.host.is_ephemeral, "boolean");
+          addTypeDQ(datatype_error, "host.in_production", ctx.host.in_production, "boolean");
+          addTypeDQ(datatype_error,"host.last_seen_date",  ctx.host.last_seen_date,"date");
+          addTypeDQ(datatype_error,"host.managed",  ctx.host.managed,"boolean");
+          addTypeDQ(datatype_error,"host.security_update_date",  ctx.host.security_update_date,"date");
+          // addTypeDQ(datatype_error,"host.software_inventory_covered",  ctx.host.software_inventory_covered,"boolean");
+          addTypeDQ(datatype_error,"host.system_boundary_assignment_date",  ctx.host.system_boundary_assignment_date,"date");
+          
+          if(ctx.host.mobile!=null) {
+            addTypeDQ(datatype_error, "host.mobile.access_deniable_by_agency", ctx.host.mobile.access_deniable_by_agency, "boolean");
+            addTypeDQ(datatype_error, "host.mobile.emm_last_seen_date", ctx.host.mobile.emm_last_seen_date, "date");
+            addTypeDQ(datatype_error, "host.mobile.emm_removable_by_user", ctx.host.mobile.emm_removable_by_user, "boolean");
+            addTypeDQ(datatype_error, "host.mobile.mtd_protected", ctx.host.mobile.mtd_protected, "boolean");
+            addTypeDQ(datatype_error, "host.mobile.remote_wipeable", ctx.host.mobile.remote_wipeable, "boolean");
+          }
+          
+          if(ctx.host.interface!=null) {
+            if(ctx.host.interface instanceof ArrayList && (!(ctx.host.interface.isEmpty()))) {
+              for( int i=0; i < ctx.host.interface.length; i++) {
+                if(ctx.host.interface[i] != null && (!(ctx.host.interface[i].isEmpty()))) {
+                  String s = "host.interface[" + i + "].agency_owned_ips";
+                  addTypeDQ(datatype_error,s,  ctx.host.interface[i].agency_owned_ips,  "boolean");
+                }
+              }
+            }else {
+              if(ctx.host.interface instanceof HashMap) {
+                if(ctx.host.interface != null && (!(ctx.host.interface.isEmpty()))) {
+                  addTypeDQ(datatype_error,"host.interface.agency_owned_ips",  ctx.host.interface.agency_owned_ips,  "boolean");
+                }
+              }
+            }
+          }
+          if(ctx.host.services!=null) {
+            addTypeDQ(datatype_error,"host.services.active_directory",  ctx.host.services.active_directory,"boolean");
+            addTypeDQ(datatype_error,"host.services.exchange",  ctx.host.services.exchange,"boolean");
+            addTypeDQ(datatype_error,"host.services.domain_name",  ctx.host.services.domain_name,"boolean");
+          }
+          
+          //end host null check
+        }
+        
+        
+        
+        if(ctx.system_boundary!=null){
+          addTypeDQ(datatype_error,"system_boundary.authorization_decision_date",  ctx.system_boundary.authorization_decision_date,"date");
+          addTypeDQ(datatype_error,"system_boundary.authorization_decision_expiration_date",  ctx.system_boundary.authorization_decision_expiration_date,"date");
+          addTypeDQ(datatype_error,"system_boundary.authorized",  ctx.system_boundary.authorized,"boolean");
+          addTypeDQ(datatype_error,"system_boundary.hva_status",  ctx.system_boundary.hva_status,"boolean");
+          
+        }
+        
+        //DQ Datatype Checks for Organization objects and fields
+        if(ctx.organization != null) 
+        {
+          addTypeDQ(datatype_error,"organization.is_cfo_act",  ctx.organization.is_cfo_act,"boolean");
+        }
+        
+        if(ctx.vulnerability_finding!=null){
+          
+          addTypeDQ(datatype_error,"vulnerability_finding.days_active",  ctx.vulnerability_finding.days_active,"integer");
+          addTypeDQ(datatype_error,"vulnerability_finding.first_found_date",  ctx.vulnerability_finding.first_found_date,"date");
+          addTypeDQ(datatype_error,"vulnerability_finding.last_found_date",  ctx.vulnerability_finding.last_found_date,"date");
+          addTypeDQ(datatype_error,"vulnerability_finding.remediated",  ctx.vulnerability_finding.remediated,"boolean");
+          addTypeDQ(datatype_error,"vulnerability_finding.remediated_date",  ctx.vulnerability_finding.remediated_date,"date");
+          addTypeDQ(datatype_error,"vulnerability_finding.risk_accepted",  ctx.vulnerability_finding.risk_accepted,"boolean");
+          addTypeDQ(datatype_error, "vulnerability_finding.confirmed_false_positive", ctx.vulnerability_finding.confirmed_false_positive, "boolean");
+          addTypeDQ(datatype_error,"vulnerability_finding.past_due",  ctx.vulnerability_finding.past_due,"boolean");
+          addTypeDQ(datatype_error,"vulnerability_finding.forensic_triage",  ctx.vulnerability_finding.forensic_triage,"boolean"); 
+
+
+          if(ctx.vulnerability_finding.remediation_timeline != null){
+              if(ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed_date != null){
+                  addTypeDQ(
+                      datatype_error,
+                      "vulnerability_finding.remediation_timeline.forensic_triage_completed_date",
+                      ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed_date,
+                      "date"
+                  );
+              }
+
+              if(ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated_date != null){
+                  addTypeDQ(
+                      datatype_error,
+                      "vulnerability_finding.remediation_timeline.forensic_triage_initiated_date",
+                      ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated_date,
+                      "date"
+                  );
+            
+              }
+          }
+          if(ctx.vulnerability_finding.cve!=null){
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.cvss_base_score",  ctx.vulnerability_finding.cve.cvss_base_score,"float");
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.exploitability_score",  ctx.vulnerability_finding.cve.exploitability_score,"float");
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.impact_score",  ctx.vulnerability_finding.cve.impact_score,"float");
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.nvd_last_update_date",  ctx.vulnerability_finding.cve.nvd_last_update_date,"date");
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.publish_date",  ctx.vulnerability_finding.cve.publish_date,"date");
+            addTypeDQ(datatype_error,"vulnerability_finding.cve.remediation_available",  ctx.vulnerability_finding.cve.remediation_available,"boolean");
+          }
+        }
+        
+        
+        
+        ctx.quality = new HashMap();
+        
+        ctx.quality.required_error_findings = required_error;
+        ctx.quality.required_error_count = required_error.size();
+        
+        ctx.quality.enumerated_error_findings = enumerated_error;
+        ctx.quality.enumerated_error_count = enumerated_error.size();
+        
+        ctx.quality.datatype_error_findings = datatype_error;
+        ctx.quality.datatype_error_count = datatype_error.size();
+        
+        ctx.quality.deprecated_error_findings = deprecated_error;
+        ctx.quality.deprecated_error_count = deprecated_error.size();
+        
+        ctx.quality.count = required_error.size() + enumerated_error.size() + datatype_error.size() + deprecated_error.size();
+
+
+
+
+
+        """,
+          "params": {
+            "field_rules": {
+              "system_boundary.path": {
+                "expected_type": "string",
+                "required": true
+              },
+              "system_boundary.level": {
+                "expected_type": "integer"
+              },
+              "system_boundary.level0_id": {
+                "expected_type": "string"
+              },
+              "system_boundary.level1_id": {
+                "expected_type": "string"
+              },
+              "system_boundary.level2_id": {
+                "expected_type": "string"
+              },
+              "host.exposed_to_internet": {
+                "expected_type": "string",
+                "required": true,
+                "enumerated": [
+                  "YES",
+                  "NO"
+                ]
+              }
+            }
+          },
+          "if": "ctx._index != 'cdm_errors_vuln'"
+        }
+      },
+      {
+        "script": {
+          "description": "A calculation to determine the hours to remediate a vulnerability.  This is defined as the time between the remediation date and the more recent date of either (a) the first detection of the vulnerability, or (b) the addition of the relevant CVE to the KEV catalog.  Do not execute this processor if the doc is bound for errors index, remediated != true, remediated_date is null, or both first_found_date AND kev.date_added are both null.",
+          "source": """        String checkDateFormat(Object x)
+        {
+          try {
+            ZonedDateTime zdt= ZonedDateTime.parse(x.toString(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            return "date";
+          }catch (Exception ex)
+          {
+            return "unknown";
+          }
+        }
+        
+        if( checkDateFormat(ctx.vulnerability_finding.remediated_date)=="date" ) {
+          
+          ZonedDateTime ffd = ZonedDateTime.parse('1970-01-01T00:00:00Z', DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          ZonedDateTime kda = ZonedDateTime.parse('1970-01-01T00:00:00Z', DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          ZonedDateTime rd = ZonedDateTime.parse(ctx.vulnerability_finding.remediated_date, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          
+          if( ctx.vulnerability_finding.first_found_date != null && checkDateFormat(ctx.vulnerability_finding.first_found_date)=="date" ) {
+            ffd = ZonedDateTime.parse(ctx.vulnerability_finding.first_found_date, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          }
+          if( ctx.vulnerability_finding.kev != null && ctx.vulnerability_finding.kev.date_added != null && checkDateFormat(ctx.vulnerability_finding.kev.date_added)=="date" ) {
+            kda = ZonedDateTime.parse(ctx.vulnerability_finding.kev.date_added, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+          }
+          
+          if( ffd.isAfter(kda) || ffd.isEqual(kda) ) {
+            ctx.vulnerability_finding.hours_to_remediate = Math.max(0, ChronoUnit.HOURS.between(ffd, rd));
+             ctx.vulnerability_finding.remediation_days = Math.max(0, ChronoUnit.HOURS.between(ffd, rd))/24.0;
+          }
+          else if( kda.isAfter(ffd) ) {
+            ctx.vulnerability_finding.hours_to_remediate = Math.max(0, ChronoUnit.HOURS.between(kda, rd));
+            ctx.vulnerability_finding.remediation_days = Math.max(0, ChronoUnit.HOURS.between(kda, rd))/24.0;
+          }
+          
+        }""",
+          "if": "ctx._index != 'cdm_errors_vuln' && ctx.vulnerability_finding.remediated == true && ctx.vulnerability_finding.remediated_date != null && (ctx.vulnerability_finding.first_found_date != null || (ctx.vulnerability_finding.kev != null && ctx.vulnerability_finding.kev.date_added != null) )"
+        }
+      },
+      {
+        "script": {
+          "description": "A calculation to determine the remediation_timeline. This is defined by the BOD 26-04 Directive based on several factors including whether the vulnerability is publicly exposed, on the kev, automatable, and its technical impact.",
+          "source": """
+          boolean isPubliclyExposedIp(List ips, List cidr_ranges)
+          {
+              if (ips.isEmpty()) { return true; } // If there are no ips is null, consider it publicly exposed
+
+              for (String ip : ips){
+                  boolean ip_non_public = false;
+                  for (String cidr : cidr_ranges) {
+                      def cidr_block = new CIDR(cidr);
+                      if (cidr_block.contains(ip)){
+                          ip_non_public = true; // if ip is not in a non-public range, it is publicly exposed
+                          break;
+                      }
+                  }
+                  if(!ip_non_public) { return true; }
+              }
+              
+              return false;
+          }
+          boolean isPublicilyExposedDeviceCategoryandType(def device_category, def device_type, String public_device_category, List public_device_types)
+            {
+                if (device_category == public_device_category) {
+                    return true;
+                }
+
+                if (public_device_types == null || device_type == null) {
+                    return false;
+                }
+
+                if (device_type instanceof List) {
+                    // Handle assets with multiple device types
+                    for (def type : device_type) {
+                        if (public_device_types.contains(type)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } else {
+                    // Handle assets with a singular device type
+                    return public_device_types.contains(device_type);
+                }
+            }
+          boolean isPubliclyExposedKev(def vulnerability_finding)
+          {
+            if (vulnerability_finding.kev.in_catalog != true || vulnerability_finding.remediated == true) { return false;} // If the vuln is not a KEV or is not open
+
+            ZonedDateTime date_added = ZonedDateTime.parse(vulnerability_finding.kev.date_added);
+            ZonedDateTime due_date = ZonedDateTime.parse(vulnerability_finding.kev.due_date);
+            int days_between = (int) Math.floor(Math.abs(ChronoUnit.DAYS.between(date_added, due_date)));
+
+            if (days_between <= 14) { return true; }
+            else { return false; }
+          }
+            boolean publicly_exposed;
+            if (['YES', 'NO'].contains(ctx.host.exposed_to_internet)){
+                publicly_exposed = ctx.host.exposed_to_internet == 'YES' ? true : false;
+            } 
+            else {
+              List list_of_ips = new ArrayList();
+              def interfaces = ctx.host == null ? null : ctx.host.get('interface');
+
+              if (interfaces instanceof List) {
+                  for (def iface : interfaces) {
+                      def ips = iface.get('ip');
+                      if (ips instanceof List) {
+                          list_of_ips.addAll(ips);
+                      } else if (ips != null) {
+                          list_of_ips.add(ips);
+                      }
+                  }
+              }
+              publicly_exposed = isPubliclyExposedIp(list_of_ips, params.non_public_cidr_ranges) || isPublicilyExposedDeviceCategoryandType(ctx.host.category, ctx.host.type, params.public_device_category, params.public_device_types) || isPubliclyExposedKev(ctx.vulnerability_finding)
+            }
+            if (ctx.vulnerability_finding.remediation_timeline == null) ctx.vulnerability_finding.remediation_timeline = new HashMap();
+            if(ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'TOTAL' && (publicly_exposed || (!publicly_exposed && ctx.vulnerability_finding.cve.ssvc.automatable == 'YES'))) {
+                ctx.vulnerability_finding.remediation_timeline.calendar_days = 3;
+                ctx.vulnerability_finding.remediation_timeline.total_length = "3 Days & Forensic Triage";
+            }
+            else if(publicly_exposed && ctx.vulnerability_finding.cve.ssvc.automatable == 'YES' && ((ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'PARTIAL') || (!ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'TOTAL'))){
+                ctx.vulnerability_finding.remediation_timeline.calendar_days = 3;
+                ctx.vulnerability_finding.remediation_timeline.total_length = "3 Days";
+            }
+            else if((!publicly_exposed && ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.automatable == 'NO') || (publicly_exposed && !ctx.vulnerability_finding.kev.in_catalog && ((ctx.vulnerability_finding.cve.ssvc.automatable == 'YES' && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'PARTIAL') || (ctx.vulnerability_finding.cve.ssvc.automatable == 'NO' && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'TOTAL'))) || (ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'PARTIAL' && (!publicly_exposed || ctx.vulnerability_finding.cve.ssvc.automatable == 'NO'))){
+                ctx.vulnerability_finding.remediation_timeline.calendar_days = 14;
+                ctx.vulnerability_finding.remediation_timeline.total_length = "14 Days";
+            }
+            else if(!ctx.vulnerability_finding.kev.in_catalog && ((!publicly_exposed && ctx.vulnerability_finding.cve.ssvc.automatable == 'YES') || (publicly_exposed && ctx.vulnerability_finding.cve.ssvc.automatable == 'NO' && ctx.vulnerability_finding.cve.ssvc.technical_impact == 'PARTIAL'))){
+                ctx.vulnerability_finding.remediation_timeline.calendar_days = 60;
+                ctx.vulnerability_finding.remediation_timeline.total_length = "60 Days";
+            }
+            else if(!publicly_exposed && !ctx.vulnerability_finding.kev.in_catalog && ctx.vulnerability_finding.cve.ssvc.automatable == 'NO'){
+                ctx.vulnerability_finding.remediation_timeline.total_length = "Fix on System Upgrade";
+            }
+            """,
+          "params": {
+            "public_device_category": "NETWORKING DEVICE",
+            "public_device_types": [
+              "MODEM",
+              "ROUTER",
+              "SWITCH",
+              "BRIDGING DEVICE",
+              "GATEWAY DEVICE",
+              "WIRELESS ACCESS POINT",
+              "INTRUSION DETECTION SYSTEM",
+              "INTRUSION PREVENTION SYSTEM",
+              "FIREWALL",
+              "NETWORK ADDRESS TRANSLATOR",
+              "HYBRID NETWORK ADDRESS TRANSLATOR",
+              "LOAD BALANCER",
+              "VPN",
+              "ENCRYPTOR/DECRYPTOR",
+              "PUBLIC KEY INFRASTRUCTURE",
+              "OTHER INFORMATION SECURITY MONITORING DEVICE",
+              "OTHER DEVICE ADDRESSABLE ON THE NETWORK"
+            ],
+            "non_public_cidr_ranges": [
+              "10.0.0.0/8",
+              "172.16.0.0/12",
+              "192.168.0.0/16",
+              "127.0.0.0/8",
+              "169.254.0.0/16",
+              "100.64.0.0/10",
+              "198.18.0.0/15",
+              "0.0.0.0/8",
+              "224.0.0.0/4",
+              "240.0.0.0/4",
+              "fc00::/7",
+              "fe80::/10",
+              "::1/128",
+              "::/128",
+              "ff00::/8"
+            ]
+          },
+          "if": "ctx._index != 'cdm_errors_vuln' && ctx.vulnerability_finding != null && ctx.vulnerability_finding.kev != null && ctx.vulnerability_finding.kev.in_catalog != null && ctx.vulnerability_finding.cve != null && ctx.vulnerability_finding.cve.ssvc != null && ['YES', 'NO'].contains(ctx.vulnerability_finding.cve.ssvc.automatable) && ['PARTIAL', 'TOTAL'].contains(ctx.vulnerability_finding.cve.ssvc.technical_impact) && ctx.host != null && ((['YES', 'NO'].contains(ctx.host.exposed_to_internet)) || (ctx.host.category != null && ctx.host.type != null && (ctx.vulnerability_finding.kev.in_catalog == false || (ctx.vulnerability_finding.kev.due_date != null && ctx.vulnerability_finding.kev.date_added != null))))"
+        }
+      },
+      {
+        "script": {
+          "ignore_failure": true,
+          "description": "Set vulnerability_finding.past_due based on vulnerability_finding.remediation_timeline.calendar_days",
+          "source": """        if (
+          ctx.vulnerability_finding.remediated != true
+          && ctx.vulnerability_finding.days_cve_active != null
+          && ctx.vulnerability_finding.remediation_timeline != null
+          && ctx.vulnerability_finding.remediation_timeline.calendar_days != null
+          && ctx.vulnerability_finding.days_cve_active > ctx.vulnerability_finding.remediation_timeline.calendar_days
+        ) {
+          // If remediated is not true, we use days_cve_active
+          ctx.vulnerability_finding.past_due = true
+        } else if (
+          ctx.vulnerability_finding.remediated == true
+          && ctx.vulnerability_finding.remediation_days != null
+          && ctx.vulnerability_finding.remediation_timeline != null
+          && ctx.vulnerability_finding.remediation_timeline.calendar_days != null
+          && ctx.vulnerability_finding.remediation_days > ctx.vulnerability_finding.remediation_timeline.calendar_days
+        ){
+          // If remediated is true, we use remediation_days
+          ctx.vulnerability_finding.past_due = true
+        } else {
+          ctx.vulnerability_finding.past_due = false
+        }"""
+        }
+      },
+      {
+        "script": {
+          "ignore_failure": true,
+          "description": "Calculations for Forensic Triage",
+          "source": """    
+
+
+
+  
+   if ( ctx.vulnerability_finding != null && ctx.vulnerability_finding.remediation_timeline != null )
+        {
+                
+                  
+                 
+                    
+                   
+                ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated = ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated_date != null;
+                ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed = ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed_date != null;
+
+
+                ZonedDateTime foundDate = null;
+                ZonedDateTime dateAdded = null;
+                    
+                if( ctx.vulnerability_finding.first_found_date != null ) {
+                 foundDate = ZonedDateTime.parse(ctx.vulnerability_finding.first_found_date, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                }
+                if( ctx.vulnerability_finding.kev != null && ctx.vulnerability_finding.kev.date_added != null ) {
+                 dateAdded = ZonedDateTime.parse(ctx.vulnerability_finding.kev.date_added, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                }
+                ZonedDateTime maxDate = foundDate;
+               
+                if( maxDate != null && dateAdded != null && maxDate.isBefore(dateAdded) ) {
+                        maxDate = dateAdded;
+                    }
+                    
+                
+                if (maxDate != null && ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated){
+                        
+                        ZonedDateTime initiatedDate = ZonedDateTime.parse(ctx.vulnerability_finding.remediation_timeline.forensic_triage_initiated_date, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                        ctx.vulnerability_finding.remediation_timeline.forensic_triage_time_to_initiate =  ChronoUnit.DAYS.between(maxDate, initiatedDate);
+                        }
+               
+
+                if (maxDate != null && ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed){
+
+                        ZonedDateTime completedDate = ZonedDateTime.parse(ctx.vulnerability_finding.remediation_timeline.forensic_triage_completed_date, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                        ctx.vulnerability_finding.remediation_timeline.forensic_triage_time_to_complete = ChronoUnit.DAYS.between(maxDate, completedDate);
+                        }
+                
+        }
+       
+        """
+        }
+      },
+      {
+        "script": {
+          "description": "Set vulnerability_finding.enumeration based on vulnerability_finding.cve.id",
+          "source": """
+            def id = ctx.vulnerability_finding.cve.id;
+
+            if (id.startsWith("CVE-")) {
+                ctx.vulnerability_finding.enumeration = "CVE";
+            } else {
+                ctx.vulnerability_finding.enumeration = "OTHER";
+            }
+            """,
+          "if": "ctx._index != 'cdm_errors_vuln' && ctx.vulnerability_finding.cve != null && ctx.vulnerability_finding.cve.id != null"
+        }
+      },
+      {
+        "set": {
+          "ignore_failure": true,
+          "field": "_index",
+          "if": "ctx._index != 'cdm_errors_vuln' && ctx.vulnerability_finding.confirmed_false_positive == true",
+          "value": "cdm_vuln_false_positive"
+        }
+      }
+    ]
+  }
+}
