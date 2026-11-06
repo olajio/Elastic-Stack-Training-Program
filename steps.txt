@@ -1,0 +1,1137 @@
+# 123: DELETE cdm_vuln 200 OK
+{
+  "acknowledged": true
+}
+# 124: PUT cdm_vuln 200 OK
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "cdm_vuln"
+}
+# 125: GET cdm_vuln/_mapping 200 OK
+{
+  "cdm_vuln": {
+    "mappings": {
+      "dynamic": "false",
+      "_meta": {
+        "cdm_vuln_custom": "v65..2025-05. Cyberscope. 2025-05. poam_ext_date",
+        "version": "5.0.0"
+      },
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "cdm_doc_id": {
+          "type": "keyword"
+        },
+        "custom": {
+          "properties": {
+            "host": {
+              "properties": {
+                "device_classification": {
+                  "type": "keyword"
+                },
+                "mdr_latest_match_score": {
+                  "type": "integer"
+                },
+                "mdr_quality": {
+                  "type": "integer"
+                },
+                "public": {
+                  "type": "keyword"
+                },
+                "serial_number": {
+                  "type": "keyword"
+                },
+                "site": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "kev": {
+              "properties": {
+                "cve": {
+                  "properties": {
+                    "id": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "date_added": {
+                  "type": "date"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "due_date": {
+                  "type": "date"
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "product": {
+                  "type": "keyword"
+                },
+                "required_action": {
+                  "type": "text"
+                },
+                "vendor": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "plugin": {
+              "properties": {
+                "family": {
+                  "type": "keyword"
+                },
+                "id": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    }
+                  }
+                }
+              }
+            },
+            "poam": {
+              "properties": {
+                "current": {
+                  "properties": {
+                    "created_date": {
+                      "type": "date",
+                      "format": "strict_date_optional_time||M/d/yyyy",
+                      "ignore_malformed": true
+                    },
+                    "extension_date": {
+                      "type": "date",
+                      "format": "strict_date_optional_time||M/d/yyyy",
+                      "ignore_malformed": true
+                    },
+                    "id": {
+                      "type": "keyword"
+                    },
+                    "scheduled_completion_date": {
+                      "type": "date",
+                      "format": "strict_date_optional_time||M/d/yyyy",
+                      "ignore_malformed": true
+                    },
+                    "status": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "previous": {
+                  "properties": {
+                    "completion_date": {
+                      "type": "date",
+                      "format": "strict_date_optional_time||M/d/yyyy",
+                      "ignore_malformed": true
+                    },
+                    "created_date": {
+                      "type": "date",
+                      "format": "strict_date_optional_time||M/d/yyyy",
+                      "ignore_malformed": true
+                    },
+                    "id": {
+                      "type": "keyword"
+                    }
+                  }
+                }
+              }
+            },
+            "sourcetype_vuln": {
+              "type": "keyword"
+            },
+            "system_boundary": {
+              "properties": {
+                "authorization_expiration_status": {
+                  "type": "keyword"
+                },
+                "authorization_status": {
+                  "type": "keyword"
+                },
+                "bia_last_reviewed_date": {
+                  "type": "date"
+                },
+                "bia_required": {
+                  "type": "boolean"
+                },
+                "configuration_management_plan_last_reviewed_date": {
+                  "type": "date"
+                },
+                "configuration_management_plan_required": {
+                  "type": "boolean"
+                },
+                "contingency_plan_last_reviewed_date": {
+                  "type": "date"
+                },
+                "contingency_plan_required": {
+                  "type": "boolean"
+                },
+                "contingency_plan_test_date": {
+                  "type": "date"
+                },
+                "contingency_plan_tested": {
+                  "type": "boolean"
+                },
+                "days_since_last_contingency_plan_test": {
+                  "type": "integer"
+                },
+                "disaster_recovery_plan_last_reviewed_date": {
+                  "type": "date"
+                },
+                "disaster_recovery_plan_required": {
+                  "type": "boolean"
+                },
+                "disaster_recovery_test_date": {
+                  "type": "date"
+                },
+                "grouptagging": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "has_assets": {
+                  "type": "boolean"
+                },
+                "hva_status": {
+                  "type": "boolean"
+                },
+                "hw_baseline_count": {
+                  "type": "integer"
+                },
+                "incident_response_plan_last_reviewed_date": {
+                  "type": "date"
+                },
+                "incident_response_plan_required": {
+                  "type": "boolean"
+                },
+                "incident_response_test_date": {
+                  "type": "date"
+                },
+                "is_decommissioned": {
+                  "type": "boolean"
+                },
+                "isfismareportable": {
+                  "type": "boolean"
+                },
+                "iso_email": {
+                  "type": "keyword"
+                },
+                "owner": {
+                  "type": "keyword"
+                },
+                "privacy_impact_assessment_last_reviewed_date": {
+                  "type": "date"
+                },
+                "privacy_impact_assessment_required": {
+                  "type": "boolean"
+                },
+                "privacy_threshold_analysis_last_reviewed_date": {
+                  "type": "date"
+                },
+                "privacy_threshold_analysis_required": {
+                  "type": "boolean"
+                },
+                "registrationtype": {
+                  "type": "keyword"
+                },
+                "system_development_lifecycle": {
+                  "type": "keyword"
+                },
+                "systemtype": {
+                  "type": "keyword"
+                },
+                "vasiid": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "cve": {
+          "properties": {
+            "id": {
+              "type": "alias",
+              "path": "vulnerability_finding.cve.id"
+            },
+            "severity": {
+              "type": "alias",
+              "path": "vulnerability_finding.cve.severity"
+            }
+          }
+        },
+        "device_scan": {
+          "properties": {
+            "auth_outcome": {
+              "type": "keyword"
+            },
+            "credentialed": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "method": {
+              "type": "keyword"
+            },
+            "observer": {
+              "properties": {
+                "host": {
+                  "properties": {
+                    "id": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword",
+                          "ignore_above": 256
+                        }
+                      }
+                    }
+                  }
+                },
+                "nvd_last_update_date": {
+                  "type": "date"
+                },
+                "product": {
+                  "type": "keyword"
+                },
+                "type": {
+                  "type": "keyword"
+                },
+                "vendor": {
+                  "type": "keyword"
+                },
+                "version": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "scan_date": {
+              "type": "date"
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "directive": {
+          "properties": {
+            "id": {
+              "type": "alias",
+              "path": "vulnerability_finding.directive.id"
+            }
+          }
+        },
+        "facility": {
+          "properties": {
+            "address": {
+              "type": "keyword"
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "location": {
+              "type": "geo_point"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "host": {
+          "properties": {
+            "architecture": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "authorized": {
+              "type": "boolean"
+            },
+            "category": {
+              "type": "keyword"
+            },
+            "encrypted": {
+              "type": "boolean"
+            },
+            "exposed_to_internet": {
+              "type": "keyword"
+            },
+            "first_found_date": {
+              "type": "date"
+            },
+            "has_antiexploit_software": {
+              "type": "boolean"
+            },
+            "has_security_software": {
+              "type": "boolean"
+            },
+            "hostname": {
+              "type": "keyword"
+            },
+            "id": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "in_production": {
+              "type": "boolean"
+            },
+            "interface": {
+              "properties": {
+                "agency_owned_ips": {
+                  "type": "boolean"
+                },
+                "ip": {
+                  "type": "ip"
+                },
+                "mac": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "is_ephemeral": {
+              "type": "boolean"
+            },
+            "is_virtual": {
+              "type": "boolean"
+            },
+            "last_seen_date": {
+              "type": "date"
+            },
+            "make": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "managed": {
+              "type": "boolean"
+            },
+            "mobile": {
+              "properties": {
+                "access_deniable_by_agency": {
+                  "type": "boolean"
+                },
+                "assigned_phone_numbers": {
+                  "type": "keyword"
+                },
+                "emm_last_seen_date": {
+                  "type": "date"
+                },
+                "emm_removable_by_user": {
+                  "type": "boolean"
+                },
+                "imei": {
+                  "type": "keyword"
+                },
+                "management_server": {
+                  "type": "keyword"
+                },
+                "mtd_protected": {
+                  "type": "boolean"
+                },
+                "remote_wipeable": {
+                  "type": "boolean"
+                },
+                "serial_number": {
+                  "type": "keyword"
+                },
+                "telecom_providers": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "model": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "os": {
+              "properties": {
+                "family": {
+                  "type": "keyword"
+                },
+                "full": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "kernel": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "platform": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "type": {
+                  "type": "keyword"
+                },
+                "version": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "publicly_exposed": {
+              "type": "alias",
+              "path": "host.exposed_to_internet"
+            },
+            "security_update_date": {
+              "type": "date"
+            },
+            "services": {
+              "properties": {
+                "active_directory": {
+                  "type": "boolean"
+                },
+                "domain_name": {
+                  "type": "boolean"
+                },
+                "exchange": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "system_boundary_assignment_date": {
+              "type": "date"
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "meta": {
+          "properties": {
+            "owner": {
+              "type": "keyword"
+            },
+            "tier0_validated": {
+              "type": "boolean"
+            }
+          }
+        },
+        "organization": {
+          "properties": {
+            "group": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "is_cfo_act": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "path": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "tier": {
+              "type": "integer"
+            },
+            "tier0_id": {
+              "type": "keyword"
+            },
+            "tier1_id": {
+              "type": "keyword"
+            },
+            "tier2_id": {
+              "type": "keyword"
+            },
+            "tier3_id": {
+              "type": "keyword"
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "quality": {
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "datatype_error_count": {
+              "type": "integer"
+            },
+            "datatype_error_findings": {
+              "properties": {
+                "field": {
+                  "type": "keyword"
+                },
+                "message": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "deprecated_error_count": {
+              "type": "integer"
+            },
+            "deprecated_error_findings": {
+              "properties": {
+                "field": {
+                  "type": "keyword"
+                },
+                "message": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "enumerated_error_count": {
+              "type": "integer"
+            },
+            "enumerated_error_findings": {
+              "properties": {
+                "field": {
+                  "type": "keyword"
+                },
+                "message": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "required_error_count": {
+              "type": "integer"
+            },
+            "required_error_findings": {
+              "properties": {
+                "field": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "software_finding": {
+          "properties": {
+            "cve": {
+              "properties": {
+                "id": {
+                  "type": "alias",
+                  "path": "vulnerability_finding.cve.id"
+                }
+              }
+            }
+          }
+        },
+        "system_boundary": {
+          "properties": {
+            "authorization_decision_date": {
+              "type": "date"
+            },
+            "authorization_decision_expiration_date": {
+              "type": "date"
+            },
+            "authorization_decision_type": {
+              "type": "keyword"
+            },
+            "authorization_type": {
+              "type": "keyword"
+            },
+            "authorized": {
+              "type": "boolean"
+            },
+            "authorizing_official": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "fips_199_rating": {
+              "properties": {
+                "availability": {
+                  "type": "keyword"
+                },
+                "confidentiality": {
+                  "type": "keyword"
+                },
+                "integrity": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "fips_impact_level": {
+              "type": "keyword"
+            },
+            "hva_status": {
+              "type": "boolean"
+            },
+            "hva_system": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "level": {
+              "type": "integer"
+            },
+            "level0_id": {
+              "type": "keyword"
+            },
+            "level1_id": {
+              "type": "keyword"
+            },
+            "level2_id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "path": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "vulnerability_finding": {
+          "properties": {
+            "affected_software": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "installation_file_path": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "product": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "vendor": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "version": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "confirmed_false_positive": {
+              "type": "boolean"
+            },
+            "cve": {
+              "properties": {
+                "attack_complexity": {
+                  "type": "keyword"
+                },
+                "attack_vector": {
+                  "type": "keyword"
+                },
+                "availability": {
+                  "type": "keyword"
+                },
+                "confidentiality": {
+                  "type": "keyword"
+                },
+                "cvss_base_score": {
+                  "type": "float"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "exploitability_score": {
+                  "type": "float"
+                },
+                "id": {
+                  "type": "keyword"
+                },
+                "impact_score": {
+                  "type": "float"
+                },
+                "integrity": {
+                  "type": "keyword"
+                },
+                "nvd_last_update_date": {
+                  "type": "date"
+                },
+                "nvd_status": {
+                  "type": "keyword"
+                },
+                "privileges_required": {
+                  "type": "keyword"
+                },
+                "publish_date": {
+                  "type": "date"
+                },
+                "references": {
+                  "properties": {
+                    "tags": {
+                      "type": "keyword"
+                    },
+                    "url": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "remediation_available": {
+                  "type": "boolean"
+                },
+                "scope": {
+                  "type": "keyword"
+                },
+                "severity": {
+                  "type": "keyword"
+                },
+                "ssvc": {
+                  "properties": {
+                    "assessed_date": {
+                      "type": "date"
+                    },
+                    "automatable": {
+                      "type": "keyword"
+                    },
+                    "exploitation": {
+                      "type": "keyword"
+                    },
+                    "technical_impact": {
+                      "type": "keyword"
+                    },
+                    "version": {
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "state": {
+                  "type": "keyword"
+                },
+                "type": {
+                  "type": "keyword"
+                },
+                "user_interaction": {
+                  "type": "keyword"
+                },
+                "vector": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "days_active": {
+              "type": "integer"
+            },
+            "days_cve_active": {
+              "type": "integer"
+            },
+            "days_kev_active": {
+              "type": "integer"
+            },
+            "detection_signature_id": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "directive": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "enumeration": {
+              "type": "keyword"
+            },
+            "first_found_date": {
+              "type": "date"
+            },
+            "fix": {
+              "type": "text"
+            },
+            "forensic_triage": {
+              "type": "boolean"
+            },
+            "hours_to_remediate": {
+              "type": "integer"
+            },
+            "kev": {
+              "properties": {
+                "date_added": {
+                  "type": "date"
+                },
+                "description": {
+                  "type": "text"
+                },
+                "due_date": {
+                  "type": "date"
+                },
+                "in_catalog": {
+                  "type": "boolean"
+                },
+                "known_ransomware_use": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "notes": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "product": {
+                  "type": "keyword"
+                },
+                "required_action": {
+                  "type": "text"
+                },
+                "vendor": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "last_found_date": {
+              "type": "date"
+            },
+            "past_due": {
+              "type": "boolean"
+            },
+            "remediated": {
+              "type": "boolean"
+            },
+            "remediated_date": {
+              "type": "date"
+            },
+            "remediation_days": {
+              "type": "float"
+            },
+            "remediation_timeline": {
+              "properties": {
+                "calendar_days": {
+                  "type": "integer"
+                },
+                "forensic_triage_completed": {
+                  "type": "boolean"
+                },
+                "forensic_triage_completed_date": {
+                  "type": "date"
+                },
+                "forensic_triage_initiated": {
+                  "type": "boolean"
+                },
+                "forensic_triage_initiated_date": {
+                  "type": "date"
+                },
+                "forensic_triage_time_to_complete": {
+                  "type": "float"
+                },
+                "forensic_triage_time_to_initiate": {
+                  "type": "float"
+                },
+                "total_length": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "risk_accepted": {
+              "type": "boolean"
+            },
+            "risk_justification": {
+              "type": "text"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+# 126: GET cdm_vuln/_alias 200 OK
+{
+  "cdm_vuln": {
+    "aliases": {
+      "cdm_alias_vuln_oas": {},
+      "cdm_all": {},
+      "cdm_dataquality": {},
+      "cdm_mdr": {},
+      "cdm_mdr_all": {},
+      "cdm_vuln_all": {},
+      "cdm_vuln_current": {}
+    }
+  }
+}
+# 127: GET cdm_vuln/_settings 200 OK
+{
+  "cdm_vuln": {
+    "settings": {
+      "index": {
+        "routing": {
+          "allocation": {
+            "include": {
+              "_tier_preference": "data_content"
+            }
+          }
+        },
+        "number_of_shards": "2",
+        "provided_name": "cdm_vuln",
+        "final_pipeline": "custom_fields_pipeline",
+        "default_pipeline": "cdm_vuln_final",
+        "creation_date": "1794002917913",
+        "sort": {
+          "field": "vulnerability_finding.last_found_date",
+          "order": "desc"
+        },
+        "number_of_replicas": "1",
+        "uuid": "RCw4aB74T2qghGFPsxQmBA",
+        "version": {
+          "created": "8537000"
+        }
+      }
+    }
+  }
+}
