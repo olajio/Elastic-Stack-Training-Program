@@ -57,3 +57,678 @@
 
 
 GET _tasks?actions=*reindex&detailed=true&parent_task_id=vhADf4m4RXqDvxCc1qHlPQ:14424923
+
+
+
+
+
+{
+  "nodes": {
+    "vhADf4m4RXqDvxCc1qHlPQ": {
+      "name": "instance-0000000020",
+      "transport_address": "10.160.48.130:19991",
+      "host": "10.160.48.130",
+      "ip": "10.160.48.130:19991",
+      "roles": [
+        "data_content",
+        "data_hot",
+        "ingest",
+        "remote_cluster_client",
+        "transform"
+      ],
+      "attributes": {
+        "logical_availability_zone": "zone-0",
+        "availability_zone": "us-gov-east-1a",
+        "instance_configuration": "aws.es.datahot.c7gd",
+        "region": "us-gov-east-1",
+        "server_name": "instance-0000000020.3da990f606e649418cf15090f161c674",
+        "xpack.installed": "true",
+        "transform.config_version": "10.0.0",
+        "ml.config_version": "12.0.0",
+        "data": "hot"
+      },
+      "tasks": {
+        "vhADf4m4RXqDvxCc1qHlPQ:14424925": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424925,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 0,
+            "total": 36587492,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003091990,
+          "running_time_in_nanos": 182278213376,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424984": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424984,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 18,
+            "total": 24396275,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092021,
+          "running_time_in_nanos": 182247414991,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424987": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424987,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 19,
+            "total": 24397064,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092022,
+          "running_time_in_nanos": 182247065079,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424981": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424981,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 17,
+            "total": 24386494,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092021,
+          "running_time_in_nanos": 182247755965,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424978": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424978,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 16,
+            "total": 24388512,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092021,
+          "running_time_in_nanos": 182248136273,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424974": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424974,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 15,
+            "total": 24397941,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092020,
+          "running_time_in_nanos": 182248506852,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424970": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424970,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 14,
+            "total": 24399963,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092020,
+          "running_time_in_nanos": 182248893601,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424964": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424964,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 12,
+            "total": 24391509,
+            "updated": 0,
+            "created": 335000,
+            "deleted": 0,
+            "batches": 68,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092019,
+          "running_time_in_nanos": 182249629081,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424967": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424967,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 13,
+            "total": 24395128,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092019,
+          "running_time_in_nanos": 182249236909,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424960": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424960,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 11,
+            "total": 24393386,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092019,
+          "running_time_in_nanos": 182249977552,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424957": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424957,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 10,
+            "total": 24387977,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092018,
+          "running_time_in_nanos": 182250372000,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424953": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424953,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 9,
+            "total": 24387626,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092018,
+          "running_time_in_nanos": 182250723448,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424950": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424950,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 8,
+            "total": 24388479,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092018,
+          "running_time_in_nanos": 182251093480,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424944": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424944,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 6,
+            "total": 24389138,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092017,
+          "running_time_in_nanos": 182251783497,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424947": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424947,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 7,
+            "total": 24385164,
+            "updated": 0,
+            "created": 335000,
+            "deleted": 0,
+            "batches": 68,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092017,
+          "running_time_in_nanos": 182251439355,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424941": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424941,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 5,
+            "total": 24390615,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092017,
+          "running_time_in_nanos": 182252167511,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424938": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424938,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 4,
+            "total": 36592390,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092016,
+          "running_time_in_nanos": 182252570926,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424932": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424932,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 2,
+            "total": 36595913,
+            "updated": 0,
+            "created": 325000,
+            "deleted": 0,
+            "batches": 66,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092015,
+          "running_time_in_nanos": 182253592945,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424935": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424935,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 3,
+            "total": 36589091,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092016,
+          "running_time_in_nanos": 182253135112,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        },
+        "vhADf4m4RXqDvxCc1qHlPQ:14424929": {
+          "node": "vhADf4m4RXqDvxCc1qHlPQ",
+          "id": 14424929,
+          "type": "transport",
+          "action": "indices:data/write/reindex",
+          "status": {
+            "slice_id": 1,
+            "total": 36592780,
+            "updated": 0,
+            "created": 330000,
+            "deleted": 0,
+            "batches": 67,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0,
+            "requests_per_second": -1,
+            "throttled_until_millis": 0
+          },
+          "description": "reindex from [tmp_cdm_vuln] updated with Script{type=inline, lang='painless', idOrCode='if (ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.custom.remove('kev'); }', options={}, params={}} to [cdm_vuln]",
+          "start_time_in_millis": 1794003092014,
+          "running_time_in_nanos": 182254253119,
+          "cancellable": true,
+          "cancelled": false,
+          "parent_task_id": "vhADf4m4RXqDvxCc1qHlPQ:14424923",
+          "headers": {
+            "trace.id": "6ec68c0e7bae14529dcee1afe66e0341"
+          }
+        }
+      }
+    }
+  }
+}
