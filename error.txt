@@ -1,15 +1,13 @@
-POST _reindex?wait_for_completion=false
-{
-  "source": {
-    "index": "tmp_cdm_swam",
-    "size": 5000
-  },
-  "dest": {
-    "index": "cdm_swam",
-    "op_type": "create"
-  },
-  "conflicts": "proceed"
-}
+   POST _reindex?wait_for_completion=false
+   {
+     "source": { "index": "tmp_cdm_vuln", "size": 5000 },
+     "dest": { "index": "cdm_vuln", "op_type": "create" },
+     "conflicts": "proceed",
+     "script": {
+       "lang": "painless",
+       "source": "if (ctx._source.containsKey('custom') && ctx._source.custom != null && ctx._source.custom.containsKey('kev')) { ctx._source.remove('custom.kev'); }"
+     }
+   }
 
 "completed": true,
   "task": {
